@@ -62,7 +62,9 @@ ordered_collections:
   - pages
   - others
 
-page_width: 800px
+timezone: Asia/Shanghai
+
+page_width: 900px
 
 destination:      ./_site
 incremental:      false
