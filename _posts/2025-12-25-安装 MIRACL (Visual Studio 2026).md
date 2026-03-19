@@ -274,24 +274,25 @@ files to be included in this build of the MIRACL library.
   - 如果在 `bgw.cpp` 中启用的是 **`MR_PAIRING_SSP`**（GF(p) 曲线），需要加入：`ssp_pair.cpp`、`ecn.cpp`、`zzn.cpp`、`zzn2.cpp`、`big.cpp`。
   - 如果在 `bgw.cpp` 中启用的是 **`MR_PAIRING_SS2`**（GF(2^m) 曲线），需要加入：`ss2_pair.cpp`、`ec2.cpp`、`gf2m.cpp`、`gf2m4x.cpp`、`big.cpp`。
 
-  > 这里说的“在 `bgw.cpp` 中选择 pairing 曲线类型”，指的是 **`bgw.cpp` 顶部那一组 `#define MR_PAIRING_SS2` / `#define MR_PAIRING_SSP` 的宏开关**。你需要 **只启用其中一种**（另一种保持注释），MIRACL 会据此编译不同的双线性对（pairing）曲线实现：
-  >
-  > - `MR_PAIRING_SS2`：基于 **GF(2^m)** 的曲线实现（需要 `ss2_pair.cpp` 等配套源文件）。
-  > - `MR_PAIRING_SSP`：基于 **GF(p)** 的曲线实现（需要 `ssp_pair.cpp` 等配套源文件）。
-  >
-  > **注意：两套源文件不能混用**，否则会出现重复符号或链接错误。
-  >
-  > ```cpp
-  > //********* CHOOSE JUST ONE OF THESE **********
-  > #define MR_PAIRING_SS2    // AES-80 or AES-128 security GF(2^m) curve
-  > //#define AES_SECURITY 80   // OR
-  > #define AES_SECURITY 128
-  > 
-  > //#define MR_PAIRING_SSP    // AES-80 or AES-128 security GF(p) curve
-  > //#define AES_SECURITY 80   // OR
-  > //#define AES_SECURITY 128
-  > //*********************************************
-  > ```
+
+> 这里说的“在 `bgw.cpp` 中选择 pairing 曲线类型”，指的是 **`bgw.cpp` 顶部那一组 `#define MR_PAIRING_SS2` / `#define MR_PAIRING_SSP` 的宏开关**。你需要 **只启用其中一种**（另一种保持注释），MIRACL 会据此编译不同的双线性对（pairing）曲线实现：
+>
+> - `MR_PAIRING_SS2`：基于 **GF(2^m)** 的曲线实现（需要 `ss2_pair.cpp` 等配套源文件）。
+> - `MR_PAIRING_SSP`：基于 **GF(p)** 的曲线实现（需要 `ssp_pair.cpp` 等配套源文件）。
+>
+> **注意：两套源文件不能混用**，否则会出现重复符号或链接错误。
+>
+> ```cpp
+> //********* CHOOSE JUST ONE OF THESE **********
+> #define MR_PAIRING_SS2    // AES-80 or AES-128 security GF(2^m) curve
+> //#define AES_SECURITY 80   // OR
+> #define AES_SECURITY 128
+> 
+> //#define MR_PAIRING_SSP    // AES-80 or AES-128 security GF(p) curve
+> //#define AES_SECURITY 80   // OR
+> //#define AES_SECURITY 128
+> //*********************************************
+> ```
 
 ### 配置 `bgw_test` 工程
 
