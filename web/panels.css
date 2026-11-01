@@ -1,0 +1,16 @@
+@media(min-width:1101px){
+  .page-article .reader-shell{grid-template-columns:var(--reader-left-width,220px) minmax(0,1fr) var(--reader-right-width,224px)}
+  .page-article.sidebar-collapsed .reader-shell{grid-template-columns:minmax(0,1fr) var(--reader-right-width,224px)}
+  .page-article.toc-collapsed .reader-shell{grid-template-columns:var(--reader-left-width,220px) minmax(0,1fr)}
+  .page-article.sidebar-collapsed.toc-collapsed .reader-shell,.page-article.focus-mode .reader-shell{display:block}
+}
+@media(min-width:961px) and (max-width:1100px){
+  .page-article .reader-shell{grid-template-columns:var(--reader-left-width,220px) minmax(0,1fr)}
+  .page-article.sidebar-collapsed .reader-shell{grid-template-columns:minmax(0,1fr)}
+}
+.panel-resizer{position:fixed;top:60px;bottom:0;width:8px;z-index:36;cursor:col-resize;touch-action:none;background:transparent}
+.panel-resizer[hidden]{display:none}
+.panel-resizer:after{content:'';position:absolute;left:3px;top:0;bottom:0;width:2px;background:transparent}
+.panel-resizer:hover:after,.panel-resizer:focus-visible:after,.panel-dragging .panel-resizer:after{background:var(--green)}
+.panel-dragging,.panel-dragging *{cursor:col-resize!important;user-select:none!important;-webkit-user-select:none!important}
+@media(max-width:960px){.panel-resizer{display:none}}

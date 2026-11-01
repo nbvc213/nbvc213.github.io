@@ -1,0 +1,303 @@
+[
+  {
+    "id": "misc-79447627",
+    "source": "nbvc213.github.io-master/_posts/2024-08-05-GitHub Page + Jekyll 建立云笔记.md",
+    "target": "content\\miscellaneous\\misc-79447627.md",
+    "legacyUrl": "/杂项笔记/2024-08-05-GitHub-Page-+-Jekyll-建立云笔记.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "misc-2eab29a3",
+    "source": "nbvc213.github.io-master/_posts/2025-12-25-安装 MIRACL (Visual Studio 2026).md",
+    "target": "content\\miscellaneous\\misc-2eab29a3.md",
+    "legacyUrl": "/杂项笔记/2025-12-25-安装-MIRACL-(Visual-Studio-2026).html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-01",
+    "source": "nbvc213.github.io-master/_posts/2026-03-14-01 引言 (Java).md",
+    "target": "content\\java\\java-01.md",
+    "legacyUrl": "/java/笔记/2026-03-14-01-引言-(Java).html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-02",
+    "source": "nbvc213.github.io-master/_posts/2026-03-14-02 Java 概述.md",
+    "target": "content\\java\\java-02.md",
+    "legacyUrl": "/java/笔记/2026-03-14-02-Java-概述.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-03",
+    "source": "nbvc213.github.io-master/_posts/2026-03-16-03 Java 基础语法（第 I 部分）.md",
+    "target": "content\\java\\java-03.md",
+    "legacyUrl": "/java/笔记/2026-03-16-03-Java-基础语法-第-I-部分.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-04",
+    "source": "nbvc213.github.io-master/_posts/2026-03-20-04 Java 基础语法（第 II 部分）.md",
+    "target": "content\\java\\java-04.md",
+    "legacyUrl": "/java/笔记/2026-03-20-04-Java-基础语法-第-II-部分.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-05",
+    "source": "nbvc213.github.io-master/_posts/2026-03-23-05 IDEA 的使用.md",
+    "target": "content\\java\\java-05.md",
+    "legacyUrl": "/java/笔记/2026-03-23-05-IDEA-的使用.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-06",
+    "source": "nbvc213.github.io-master/_posts/2026-03-23-06 面向对象编程（第 I 部分）.md",
+    "target": "content\\java\\java-06.md",
+    "legacyUrl": "/java/笔记/2026-03-23-06-面向对象编程-第-I-部分.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-07",
+    "source": "nbvc213.github.io-master/_posts/2026-04-03-07 面向对象编程（第 II 部分）.md",
+    "target": "content\\java\\java-07.md",
+    "legacyUrl": "/java/笔记/2026-04-03-07-面向对象编程-第-II-部分.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-08",
+    "source": "nbvc213.github.io-master/_posts/2026-04-13-08 数组.md",
+    "target": "content\\java\\java-08.md",
+    "legacyUrl": "/java/笔记/2026-04-13-08-数组.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-09",
+    "source": "nbvc213.github.io-master/_posts/2026-04-19-09 异常.md",
+    "target": "content\\java\\java-09.md",
+    "legacyUrl": "/java/笔记/2026-04-19-09-异常.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-10",
+    "source": "nbvc213.github.io-master/_posts/2026-04-21-10 常用类.md",
+    "target": "content\\java\\java-10.md",
+    "legacyUrl": "/java/笔记/2026-04-21-10-常用类.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "misc-ebb84b73",
+    "source": "nbvc213.github.io-master/_posts/2026-05-10-安装 MIRACL Core (Visual Studio 2026).md",
+    "target": "content\\miscellaneous\\misc-ebb84b73.md",
+    "legacyUrl": "/杂项笔记/2026-05-10-安装-MIRACL-Core-(Visual-Studio-2026).html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-11",
+    "source": "nbvc213.github.io-master/_posts/2026-05-19-11 泛型.md",
+    "target": "content\\java\\java-11.md",
+    "legacyUrl": "/java/笔记/2026-05-19-11-泛型.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-12",
+    "source": "nbvc213.github.io-master/_posts/2026-05-19-12 集合.md",
+    "target": "content\\java\\java-12.md",
+    "legacyUrl": "/java/笔记/2026-05-19-12-集合.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-13",
+    "source": "nbvc213.github.io-master/_posts/2026-05-31-13 IO.md",
+    "target": "content\\java\\java-13.md",
+    "legacyUrl": "/java/笔记/2026-05-31-13-IO.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-14",
+    "source": "nbvc213.github.io-master/_posts/2026-06-03-14 多线程.md",
+    "target": "content\\java\\java-14.md",
+    "legacyUrl": "/java/笔记/2026-06-03-14-多线程.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-15",
+    "source": "nbvc213.github.io-master/_posts/2026-06-30-15 网络编程.md",
+    "target": "content\\java\\java-15.md",
+    "legacyUrl": "/java/笔记/2026-06-30-15-网络编程.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-16",
+    "source": "nbvc213.github.io-master/_posts/2026-06-30-16 反射.md",
+    "target": "content\\java\\java-16.md",
+    "legacyUrl": "/java/笔记/2026-06-30-16-反射.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-17",
+    "source": "nbvc213.github.io-master/_posts/2026-07-03-17 注解.md",
+    "target": "content\\java\\java-17.md",
+    "legacyUrl": "/java/笔记/2026-07-03-17-注解.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-18",
+    "source": "nbvc213.github.io-master/_posts/2026-07-03-18 Lambda&Stream API.md",
+    "target": "content\\java\\java-18.md",
+    "legacyUrl": "/java/笔记/2026-07-03-18-Lambda&Stream-API.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-19",
+    "source": "nbvc213.github.io-master/_posts/2026-07-07-19 Java 新特性.md",
+    "target": "content\\java\\java-19.md",
+    "legacyUrl": "/java/笔记/2026-07-07-19-Java-新特性.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-20",
+    "source": "nbvc213.github.io-master/_posts/2026-07-12-20 MySQL（第 I 部分）.md",
+    "target": "content\\java\\java-20.md",
+    "legacyUrl": "/java/笔记/2026-07-12-20-MySQL-第-I-部分.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-21",
+    "source": "nbvc213.github.io-master/_posts/2026-08-17-21 MySQL（第 II 部分）.md",
+    "target": "content\\java\\java-21.md",
+    "legacyUrl": "/java/笔记/2026-08-17-21-MySQL-第-II-部分.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-22",
+    "source": "nbvc213.github.io-master/_posts/2026-08-22-22 MySQL（第 III 部分）.md",
+    "target": "content\\java\\java-22.md",
+    "legacyUrl": "/java/笔记/2026-08-22-22-MySQL-第-III-部分.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-23",
+    "source": "nbvc213.github.io-master/_posts/2026-08-29-23 JDBC.md",
+    "target": "content\\java\\java-23.md",
+    "legacyUrl": "/java/笔记/2026-08-29-23-JDBC.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-24",
+    "source": "nbvc213.github.io-master/_posts/2026-09-05-24 HTML.md",
+    "target": "content\\java\\java-24.md",
+    "legacyUrl": "/java/笔记/2026-09-05-24-HTML.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-25",
+    "source": "nbvc213.github.io-master/_posts/2026-09-06-25 CSS.md",
+    "target": "content\\java\\java-25.md",
+    "legacyUrl": "/java/笔记/2026-09-06-25-CSS.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "java-26",
+    "source": "nbvc213.github.io-master/_posts/2026-09-13-26 JavaScript.md",
+    "target": "content\\java\\java-26.md",
+    "legacyUrl": "/java/笔记/2026-09-13-26-JavaScript.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "banking-50",
+    "source": "nbvc213.github.io-master/_posts/2026-10-12-50 初级银从法律法规 - 1.1 经济基础知识.md",
+    "target": "content\\banking\\banking-50.md",
+    "legacyUrl": "/银从/笔记/2026-10-12-50-初级银从法律法规-1.1-经济基础知识.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "banking-51",
+    "source": "nbvc213.github.io-master/_posts/2026-10-12-51 初级银从法律法规 - 1.2 金融基础知识.md",
+    "target": "content\\banking\\banking-51.md",
+    "legacyUrl": "/银从/笔记/2026-10-12-51-初级银从法律法规-1.2-金融基础知识.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "banking-52",
+    "source": "nbvc213.github.io-master/_posts/2026-10-12-52 初级银从法律法规 - 1.3 金融市场.md",
+    "target": "content\\banking\\banking-52.md",
+    "legacyUrl": "/银从/笔记/2026-10-12-52-初级银从法律法规-1.3-金融市场.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "banking-53",
+    "source": "nbvc213.github.io-master/_posts/2026-10-12-53 初级银从法律法规 - 1.4 银行体系.md",
+    "target": "content\\banking\\banking-53.md",
+    "legacyUrl": "/银从/笔记/2026-10-12-53-初级银从法律法规-1.4-银行体系.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "banking-54",
+    "source": "nbvc213.github.io-master/_posts/2026-10-13-54 初级银从法律法规 - 2.1 存款业务.md",
+    "target": "content\\banking\\banking-54.md",
+    "legacyUrl": "/银从/笔记/2026-10-13-54-初级银从法律法规-2.1-存款业务.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "banking-55",
+    "source": "nbvc213.github.io-master/_posts/2026-10-13-55 初级银从法律法规 - 2.2 贷款业务.md",
+    "target": "content\\banking\\banking-55.md",
+    "legacyUrl": "/银从/笔记/2026-10-13-55-初级银从法律法规-2.2-贷款业务.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "banking-56",
+    "source": "nbvc213.github.io-master/_posts/2026-10-15-56 初级银从法律法规 - 2.3 结算、代理及托管业务.md",
+    "target": "content\\banking\\banking-56.md",
+    "legacyUrl": "/银从/笔记/2026-10-15-56-初级银从法律法规-2.3-结算-代理及托管业务.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "banking-57",
+    "source": "nbvc213.github.io-master/_posts/2026-10-15-57 初级银从法律法规 - 2.6 银行卡业务.md",
+    "target": "content\\banking\\banking-57.md",
+    "legacyUrl": "/银从/笔记/2026-10-15-57-初级银从法律法规-2.6-银行卡业务.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "banking-58",
+    "source": "nbvc213.github.io-master/_posts/2026-10-15-58 初级银从法律法规 - 2.7 理财与同业业务.md",
+    "target": "content\\banking\\banking-58.md",
+    "legacyUrl": "/银从/笔记/2026-10-15-58-初级银从法律法规-2.7-理财与同业业务.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "banking-59",
+    "source": "nbvc213.github.io-master/_posts/2026-10-15-59 初级银从法律法规 - 3.1 银行管理基础.md",
+    "target": "content\\banking\\banking-59.md",
+    "legacyUrl": "/银从/笔记/2026-10-15-59-初级银从法律法规-3.1-银行管理基础.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "banking-60",
+    "source": "nbvc213.github.io-master/_posts/2026-10-15-60 初级银从法律法规 - 3.2 公司治理、内部控制与合规管理.md",
+    "target": "content\\banking\\banking-60.md",
+    "legacyUrl": "/银从/笔记/2026-10-15-60-初级银从法律法规-3.2-公司治理-内部控制与合规管理.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "banking-61",
+    "source": "nbvc213.github.io-master/_posts/2026-10-15-61 初级银从法律法规 - 3.3 商业银行资产负债管理.md",
+    "target": "content\\banking\\banking-61.md",
+    "legacyUrl": "/银从/笔记/2026-10-15-61-初级银从法律法规-3.3-商业银行资产负债管理.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "banking-63",
+    "source": "nbvc213.github.io-master/_posts/2026-10-18-63 初级银从法律法规 - 3.5 风险管理.md",
+    "target": "content\\banking\\banking-63.md",
+    "legacyUrl": "/银从/笔记/2026-10-18-63-初级银从法律法规-3.5-风险管理.html",
+    "legacyVerified": true
+  },
+  {
+    "id": "banking-72",
+    "source": "nbvc213.github.io-master/_posts/2026-10-18-72 初级银从法律法规 - 高频考点.md",
+    "target": "content\\banking\\banking-72.md",
+    "legacyUrl": "/银从/笔记/2026-10-18-72-初级银从法律法规-高频考点.html",
+    "legacyVerified": true
+  }
+]

@@ -1,0 +1,27 @@
+/* Token palette is independent of the website accent and page theme. */
+html:root .prose .code-block{background:var(--syntax-background);color:var(--syntax-foreground)}
+html:root .prose .code-block>code{background:var(--syntax-background);color:var(--syntax-foreground);font-size:var(--code-size);line-height:var(--code-leading);padding:14px 16px;mask-image:none}
+html:root .prose .code-block .code-line{min-height:calc(1em * var(--code-leading));line-height:inherit}
+html:root .prose .code-block.code-collapsed>code{max-height:calc(var(--code-collapsed-lines,25) * var(--code-size) * var(--code-leading) + 28px);overflow-y:auto!important;mask-image:none;overscroll-behavior-y:contain;scrollbar-width:thin}
+html:root .prose .code-block .hljs-comment,html:root .prose .code-block .hljs-quote{color:var(--syntax-comment)}
+html:root .prose .code-block .hljs-keyword,html:root .prose .code-block .hljs-selector-tag,html:root .prose .code-block .hljs-meta{color:var(--syntax-keyword)}
+html:root .prose .code-block .hljs-string,html:root .prose .code-block .hljs-regexp,html:root .prose .code-block .hljs-symbol{color:var(--syntax-string)}
+html:root .prose .code-block .hljs-number,html:root .prose .code-block .hljs-literal{color:var(--syntax-number)}
+html:root .prose .code-block .hljs-title,html:root .prose .code-block .hljs-title.function_,html:root .prose .code-block .hljs-built_in{color:var(--syntax-function)}
+html:root .prose .code-block .hljs-type,html:root .prose .code-block .hljs-title.class_{color:var(--syntax-type)}
+html:root .prose .code-block .hljs-variable,html:root .prose .code-block .hljs-params,html:root .prose .code-block .hljs-property{color:var(--syntax-variable)}
+html:root .prose .code-block .hljs-tag,html:root .prose .code-block .hljs-name,html:root .prose .code-block .hljs-selector-class{color:var(--syntax-tag)}
+html:root .prose .code-block .hljs-attr,html:root .prose .code-block .hljs-attribute{color:var(--syntax-attribute)}
+html:root .prose .code-block .hljs-operator,html:root .prose .code-block .hljs-punctuation{color:var(--syntax-operator)}
+.syntax-theme-select{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;margin-bottom:20px}
+.syntax-theme-select select{font-size:12px;max-width:190px}
+.syntax-colors{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.syntax-colors label{font-size:12px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);padding:8px;border-radius:5px;min-width:0}
+.syntax-colors input[type=color]{height:26px;width:30px;flex-shrink:0;padding:1px;cursor:pointer}
+.syntax-preview{margin:16px 0;background:var(--syntax-background);color:var(--syntax-foreground);padding:14px;border:1px solid var(--line);border-radius:5px;font-family:'JetBrains Mono',Consolas,monospace;font-size:13px;line-height:1.6}
+.syntax-preview .preview-keyword{color:var(--syntax-keyword)}.syntax-preview .preview-string{color:var(--syntax-string)}.syntax-preview .preview-comment{color:var(--syntax-comment)}
+
+/* Size the gutter to this block's line count instead of a fixed wide column. */
+html:root .prose .code-block[data-lines=true]>code{padding-left:10px}
+html:root .prose .code-block[data-lines=true] .code-line{padding-left:calc(var(--code-number-digits,2) * 1ch + 12px)}
+html:root .prose .code-block[data-lines=true] .code-line:before{width:calc(var(--code-number-digits,2) * 1ch);text-align:right;font-variant-numeric:tabular-nums}

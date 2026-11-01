@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${kind == 'home' ? site.title : title + ' · ' + site.title}">nbvc213's Notes</title>
+  <meta name="description" th:content="${note != null ? note.description : site.description}">
+  <meta property="og:title" th:content="${title}">
+  <meta property="og:description" th:content="${note != null ? note.description : site.description}">
+  <meta property="og:type" th:content="${kind == 'article' ? 'article' : 'website'}">
+  <link rel="canonical" th:href="${site.url + url}">
+  <link rel="icon" href="/media/favicon.svg" type="image/svg+xml">
+  <script>try{const p=JSON.parse(localStorage.getItem('notes.preferences')||'{}');document.documentElement.dataset.theme=p.theme==='system'||!p.theme?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p.theme;document.documentElement.dataset.accent=['forest','ocean','violet','amber','rose','slate'].includes(p.accent)?p.accent:'ocean';document.documentElement.dataset.lines=String(p.lines??false);document.documentElement.dataset.wrap=String(p.wrap??false)}catch{}</script>
+  <link rel="stylesheet" th:href="${stylesheet}">
+  <script id="page-data" type="application/json" th:utext="${pageJson}"></script>
+  <script id="toc-data" type="application/json" th:utext="${tocJson}"></script>
+  <script type="module" src="/assets/app.js"></script>
+</head>
+<body th:class="${'page-' + kind}">
+<a class="skip-link" href="#main">跳到正文</a>
+<header class="site-header">
+  <a class="brand" href="/" aria-label="返回首页"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 5C9 3 5 3 2 4v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15"/></svg><span>我的笔记</span></a>
+  <nav class="top-nav" aria-label="主导航">
+    <a href="/" th:classappend="${kind == 'home' ? 'selected' : ''}">首页</a>
+    <a href="/notes/" th:classappend="${kind == 'list' || kind == 'folder' || kind == 'article' ? 'selected' : ''}">全部笔记</a>
+    <a href="/library/" th:classappend="${kind == 'library' ? 'selected' : ''}">书架</a>
+  </nav>
+  <div id="header-tools" class="header-tools"></div>
+</header>
+
+<aside class="workspace-sidebar" th:if="${kind == 'home' || kind == 'list' || kind == 'folder' || kind == 'library'}" aria-label="笔记分类">
+  <h2>笔记分类</h2><nav><a th:each="f : ${folders}" th:href="${f.url}" th:classappend="${folder != null and folder.id == f.id ? 'current' : ''}"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="/media/icons.svg#folder"/></svg><span th:text="${f.name}"></span><small th:text="${f.count}"></small></a></nav>
+  <h2>我的阅读</h2><nav><a href="/library/?tab=bookmarks"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="/media/icons.svg#star"/></svg>收藏笔记</a><a href="/library/?tab=chapters"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="/media/icons.svg#chapters"/></svg>收藏章节</a><a href="/library/?tab=recent"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="/media/icons.svg#clock"/></svg>阅读记录</a></nav><a class="sidebar-about" href="/about/">关于笔记</a>
+</aside>
+<main id="main" class="home-shell" th:if="${kind == 'home'}">
+  <header class="welcome-heading"><h1>欢迎回来</h1><p>从上次的位置继续阅读</p></header>
+  <div id="continue-reading"></div>
+  <section class="folder-section"><div class="section-title"><h2>笔记分类</h2><a href="/notes/">查看全部 →</a></div>
+    <div class="folder-grid"><a class="folder-card" th:each="f : ${folders}" th:href="${f.url}" th:classappend="${'folder-' + f.color}"><div class="folder-icon" aria-hidden="true"><svg class="" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="/media/icons.svg#folder"/></svg></div><div><h3 th:text="${f.name}"></h3><span class="folder-count" th:text="${f.count + ' 篇笔记'}"></span></div></a></div>
+  </section>
+  <section class="home-bottom"><div class="section-title"><h2>最近更新</h2><a href="/notes/">全部笔记 →</a></div><div class="recent-list"><a class="recent-row" th:each="n : ${latest}" th:href="${n.url}"><svg class="document-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="/media/icons.svg#file"/></svg><h3 th:text="${n.title}"></h3><span class="category-label" th:text="${n.folderName}"></span><span class="recent-date" th:text="${n.updated}"></span></a></div></section>
+</main>
+
+<main id="main" class="collection-shell" th:if="${kind == 'list' || kind == 'folder' || kind == 'library'}">
+  <div class="breadcrumb"><a href="/">首页</a><span>/</span><span th:text="${title}"></span></div>
+  <section class="collection-hero"><h1 th:text="${title}"></h1><p th:if="${kind == 'folder'}" th:text="${folder.description}"></p></section>
+  <div id="collection"></div>
+  <noscript><ul><li th:each="n : ${notes}" th:if="${folder == null || n.folder == folder.id}"><a th:href="${n.url}" th:text="${n.title}"></a></li></ul></noscript>
+</main>
+
+<div class="reader-shell" th:if="${kind == 'article'}">
+  <button type="button" class="toc-reopen" data-toggle-toc aria-label="展开本文目录">« 本文目录</button>
+  <button type="button" class="sidebar-reopen" data-toggle-sidebar aria-label="展开笔记列表">展开笔记列表 »</button>
+  <aside class="reader-sidebar" id="reader-sidebar"><div class="sidebar-heading"><span>笔记列表</span><button type="button" data-toggle-sidebar aria-label="收起笔记列表">«</button></div>
+    <details class="sidebar-folder" th:each="f : ${folders}" th:open="${f.id == note.folder}"><summary><svg class="sidebar-folder-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="/media/icons.svg#folder"/></svg><span th:text="${f.name}"></span><small th:text="${f.count}"></small></summary>
+      <nav><a th:each="n : ${f.notes}" th:href="${n.url}" th:classappend="${n.id == note.id ? 'current' : ''}" th:attr="aria-current=${n.id == note.id ? 'page' : null}" th:text="${n.title}"></a></nav>
+    </details><div class="sidebar-foot"><a href="/notes/">查看全部笔记 →</a></div>
+  </aside>
+  <main class="article-main" id="main"><div class="breadcrumb"><a href="/">首页</a><span>/</span><a th:href="${'/folders/' + note.folder + '/'}" th:text="${note.folderName}"></a><span>/</span><span>正文</span></div>
+    <header class="article-heading"><h1 th:text="${note.title}"></h1><div class="article-meta"><span th:text="${'更新于 ' + note.updated}"></span><span>·</span><span th:text="${'约 ' + note.minutes + ' 分钟'}"></span><span>·</span><span th:text="${#numbers.formatInteger(note.chars, 1, 'COMMA') + ' 字符'}"></span></div><div id="article-actions"></div></header>
+    <article id="note-content" class="prose" th:utext="${note.html}"></article>
+    <div id="article-end" class="article-end"><p>正文结束</p></div>
+    <section class="backlink-section" th:if="${!#lists.isEmpty(note.backlinks)}"><h2>提到这篇笔记</h2><a th:each="n : ${note.backlinks}" th:href="${n.url}" th:text="${n.title}"></a></section>
+    <nav class="neighbor-notes" aria-label="相邻笔记"><a th:if="${note.previous != null}" th:href="${note.previous.url}"><span>← 上一篇</span><strong th:text="${note.previous.title}"></strong></a><a class="neighbor-next" th:if="${note.next != null}" th:href="${note.next.url}"><span>下一篇 →</span><strong th:text="${note.next.title}"></strong></a><a th:if="${note.next == null}" th:href="${'/folders/' + note.folder + '/'}"><span>读完这一专题了</span><strong>返回专题目录 ↗</strong></a></nav>
+  </main><aside class="reader-toc"><div id="table-of-contents"></div></aside>
+</div>
+
+<main id="main" class="collection-shell about-shell" th:if="${kind == 'about'}"><h1>把所学，留在这里。</h1><p>这里是 nbvc213 的个人笔记，记录编程实践、学习过程和知识整理。</p><p>正文可能持续修订。阅读技术内容时，请结合文章标注的版本与更新时间。</p><div class="about-card"><h2>关于你的阅读记录</h2><p>收藏、阅读位置、状态与备注仅保存在当前浏览器中。没有账号，没有跨设备自动同步，也不收集全站访客统计。你可以在书架中备份或清除个人记录。</p></div><div class="about-card"><h2>关于内容使用</h2><p>代码块提供复制，正文限制普通复制操作。请尊重作者劳动，引用时注明来源。页面操作限制无法阻止截图或获取公开资源。</p></div><a class="primary-link" href="/notes/">翻开笔记 ↗</a></main>
+<main id="main" class="notfound-shell" th:if="${kind == 'notfound'}"><span class="eyebrow">页面未找到</span><h1>这一页，<br>暂时翻不到。</h1><p>笔记可能换了位置。试试搜索，或者从专题目录重新出发。</p><a class="primary-link" href="/notes/">查看全部笔记 ↗</a><button class="text-button" data-open-search>搜索笔记</button></main>
+<footer class="site-footer" th:if="${kind != 'article'}"><span>© 2026 nbvc213 · 我的笔记</span><a href="/about/">关于笔记</a></footer>
+<div id="global-ui"></div>
+<noscript><p class="noscript-notice">正文和链接可以正常阅读；搜索、字体设置和本机阅读记录需要启用 JavaScript。</p></noscript>
+</body></html>
