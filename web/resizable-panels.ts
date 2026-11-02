@@ -18,6 +18,8 @@ export function setupResizablePanels(){
     const fitted=fitPanelWidths(shell!.clientWidth,preview?.side==='left'?preview.width:preferences.leftPanelWidth,preview?.side==='right'?preview.width:preferences.rightPanelWidth,leftVisible,rightVisible);
     document.documentElement.style.setProperty('--floating-right-offset', `${rightVisible?fitted.right+20:20}px`);
     shell!.style.setProperty('--reader-left-width',`${fitted.left}px`);shell!.style.setProperty('--reader-right-width',`${fitted.right}px`);
+    const shellBounds=shell!.getBoundingClientRect();
+    document.documentElement.style.setProperty('--reader-center-x', `${shellBounds.left+fitted.left+(shell!.clientWidth-fitted.left-fitted.right)/2}px`);
     for(const side of ['left','right'] as const){
       const panel=shell!.querySelector<HTMLElement>(side==='left'?'.reader-sidebar':'.reader-toc');const visible=side==='left'?leftVisible:rightVisible;const handle=handles[side];handle.hidden=!visible;
       if(!visible||!panel)continue;
