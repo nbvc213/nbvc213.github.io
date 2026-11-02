@@ -18,7 +18,7 @@ html:root .prose .code-block .hljs-operator,html:root .prose .code-block .hljs-p
 .syntax-colors{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .syntax-colors label{font-size:12px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);padding:8px;border-radius:5px;min-width:0}
 .syntax-colors input[type=color]{height:26px;width:30px;flex-shrink:0;padding:1px;cursor:pointer}
-.syntax-preview{margin:16px 0;background:var(--syntax-background);color:var(--syntax-foreground);padding:14px;border:1px solid var(--line);border-radius:5px;font-family:'JetBrains Mono',Consolas,monospace;font-size:13px;line-height:1.6}
+.syntax-preview{margin:16px 0;background:var(--syntax-background);color:var(--syntax-foreground);padding:14px;border:1px solid var(--line);border-radius:5px;font-family:'JetBrains Mono Variable',Consolas,monospace;font-size:13px;line-height:1.6}
 .syntax-preview .preview-keyword{color:var(--syntax-keyword)}.syntax-preview .preview-string{color:var(--syntax-string)}.syntax-preview .preview-comment{color:var(--syntax-comment)}
 
 /* Size the gutter to this block's line count instead of a fixed wide column. */

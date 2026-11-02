@@ -2,7 +2,7 @@ import { run, maven } from './maven.mjs';
 const mode = process.argv[2];
 if (!['full','ui','content'].includes(mode)) throw new Error('Unknown build mode');
 if (mode === 'full') {
-  await run(process.execPath, ['--test', 'scripts/build-guard.test.mjs', 'scripts/release-check.test.mjs', 'scripts/rebuild-queue.test.mjs', 'scripts/personal-data.test.mjs', 'scripts/annotation-locator.test.mjs', 'scripts/panel-widths.test.mjs']);
+  await run(process.execPath, ['--test', 'scripts/build-guard.test.mjs', 'scripts/appearance.test.mjs', 'scripts/release-check.test.mjs', 'scripts/rebuild-queue.test.mjs', 'scripts/personal-data.test.mjs', 'scripts/annotation-locator.test.mjs', 'scripts/panel-widths.test.mjs']);
   await run(process.execPath, ['node_modules/vue-tsc/bin/vue-tsc.js', '--noEmit']);
 }
 if (mode !== 'content') await run(process.execPath, ['node_modules/vite/bin/vite.js', 'build']);

@@ -1,7 +1,7 @@
 import { decodePersonalBackup } from './personal-data';
 import { reactive, ref, watch } from 'vue';
 import type { Catalog, Heading, Library, Page, Position, ReadingStatus } from './types';
-import { codePalette, tokenLabels } from './code-theme';
+import { tokenLabels } from './code-theme';
 
 export const page: Page = JSON.parse(document.querySelector('#page-data')?.textContent || '{}');
 export const headings: Heading[] = JSON.parse(document.querySelector('#toc-data')?.textContent || '[]');
@@ -11,10 +11,17 @@ export const requestedHeading = ref('');
 export const ui = reactive({ search: false, settings: false, mobileToc: false, focus: false, toast: '', query: '', returnStack: [] as Array<Position & { url: string; title: string }> });
 export const defaults = { leftPanelWidth:220, rightPanelWidth:224, codeTheme:'auto', codeColors:{} as Record<string,string>, codeLineHeight:1.55, codeCollapsedLines:25, accent: 'ocean', numberedHeadings: false, headingSpace: 32, codeOffset: 2, theme: 'system', size: 18, lineHeight: 1.8, width: 760, textEn: 'system', textZh: 'system', codeEn: 'system', codeZh: 'system', lines: false, wrap: false, tocDepth: 3, answers: false, examples: true, extras: true, longCode: true };
 export type Preferences = typeof defaults;
+declare global { interface Window { notesAppearance: (p:Preferences)=>void; } }
 let initial = {};
 try { initial = JSON.parse(localStorage.getItem('notes.preferences') || '{}'); } catch { /* fall back to defaults */ }
 export const preferences = reactive<Preferences>({ ...defaults, ...initial });
-if (preferences.codeEn === 'mono') preferences.codeEn = 'system';
+function normalizeFontSelections() {
+  if(preferences.codeEn==='mono')preferences.codeEn='system';
+  for(const slot of ['textZh','codeZh'] as const)if(preferences[slot]==='hei')preferences[slot]='noto';
+  const previous:Record<string,string>={sans:'arimo',times:'tinos',serif:'gelasio'};
+  if(previous[preferences.textEn])preferences.textEn=previous[preferences.textEn];
+}
+normalizeFontSelections();
 const cleanLibrary = (): Library => ({ version: 1, records: {}, bookmarks: [], annotations: [] });
 export const library = reactive<Library>(cleanLibrary());
 let database: IDBDatabase | undefined;
@@ -24,6 +31,7 @@ let toastTimer: ReturnType<typeof setTimeout>;
 export function toast(message: string) { ui.toast = message; clearTimeout(toastTimer); toastTimer = setTimeout(() => ui.toast = '', 3300); }
 
 export async function loadState() {
+  applyPreferences();
   try {
     database = await new Promise<IDBDatabase>((ok, fail) => {
       const req = indexedDB.open('nbvc213-notes', 1);
@@ -69,29 +77,7 @@ export function saveLibrary() {
 const appliedDetails = new WeakMap<HTMLDetailsElement, boolean>();
 const appliedCode = new WeakMap<HTMLElement, {lines:boolean;wrap:boolean;longCode:boolean;limit:number}>();
 export function applyPreferences() {
-  const html = document.documentElement;
-  html.dataset.theme = preferences.theme === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : preferences.theme;
-  html.dataset.accent = preferences.accent;
-  html.dataset.numbered = String(preferences.numberedHeadings);
-  html.style.setProperty('--heading-space', `${preferences.headingSpace}px`);
-  html.style.setProperty('--code-size', `${Math.max(10,preferences.size-preferences.codeOffset)}px`);
-  html.style.setProperty('--code-leading', String(preferences.codeLineHeight));
-  html.style.setProperty('--code-collapsed-lines', String(preferences.codeCollapsedLines));
-  for (const [key,value] of Object.entries(codePalette(preferences.codeTheme,preferences.codeColors,html.dataset.theme==='dark'))) html.style.setProperty(`--syntax-${key}`,value);
-  html.dataset.lines = String(preferences.lines); html.dataset.wrap = String(preferences.wrap);
-  html.style.setProperty('--reading-size', `${preferences.size}px`);
-  html.style.setProperty('--reading-leading', String(preferences.lineHeight));
-  html.style.setProperty('--reading-width', `${preferences.width}px`);
-  const fontMap: Record<string, string> = {
-    system: 'system-ui, -apple-system, BlinkMacSystemFont', serif: 'Georgia, "Times New Roman"',
-    sans: 'Arial, Helvetica', song: '"Songti SC", SimSun', hei: '"Microsoft YaHei", "PingFang SC"',
-    mono: 'Consolas, "SFMono-Regular", monospace', noto: '"Noto Sans SC"',
-    lora: '"Lora"', jetbrains: '"JetBrains Mono"'
-  };
-  for (const slot of ['textEn', 'textZh', 'codeEn', 'codeZh'] as const) {
-    const font = preferences[slot] === 'system' && slot.endsWith('En') ? (slot === 'codeEn' ? 'Consolas, "Notes Latin System", monospace' : '"Notes Latin System"') : fontMap[preferences[slot]] || fontMap.system;
-    html.style.setProperty(`--font-${slot}`, font);
-  }
+  window.notesAppearance(preferences);
   document.querySelectorAll<HTMLDetailsElement>('details[data-kind]').forEach(d => {
     const kind = d.dataset.kind;
     const open = kind === 'answer' ? preferences.answers : kind === 'example' ? preferences.examples : preferences.extras;
@@ -169,8 +155,9 @@ export async function importPersonalData(file: File) {
       if (typeof incoming[key] === 'number' && Number.isFinite(incoming[key])) preferences[key] = Math.max(min,Math.min(max,incoming[key]));
     }
     for (const key of ['numberedHeadings','lines','wrap','answers','examples','extras','longCode'] as const) if (typeof incoming[key] === 'boolean') preferences[key] = incoming[key];
-    for (const key of ['textEn','textZh','codeEn','codeZh'] as const) if (['system','serif','sans','song','hei','mono','noto','lora','jetbrains'].includes(incoming[key])) preferences[key] = key === 'codeEn' && incoming[key] === 'mono' ? 'system' : incoming[key];
+    for (const key of ['textEn','textZh','codeEn','codeZh'] as const) if (['system','serif','times','sans','song','hei','mono','noto','lora','jetbrains','courier','arimo','tinos','gelasio'].includes(incoming[key])) preferences[key] = key === 'codeEn' && incoming[key] === 'mono' ? 'system' : incoming[key];
   }
+  normalizeFontSelections();
   preferences.codeCollapsedLines = Math.round(preferences.codeCollapsedLines);
   saveLibrary(); toast(data.skipped ? `已合并有效记录，跳过 ${data.skipped} 条无效记录` : '已合并导入阅读记录');
 }

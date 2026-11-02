@@ -34,4 +34,5 @@
 <symbol id="code-collapse" viewBox="0 0 24 24"><path d="m14 10 7-7"/><path d="M20 10h-6V4"/><path d="m3 21 7-7"/><path d="M4 14h6v6"/></symbol>
 <symbol id="code-expand" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/><path d="M9 21H3v-6"/></symbol>
 <symbol id="example" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L4 19a1.3 1.3 0 0 0 1 2h14a1.3 1.3 0 0 0 1-2L14 9V3M7 15h10"/></symbol>
+<symbol id="arrow-up" viewBox="0 0 24 24"><path d="M12 21V3m-8 8 8-8 8 8"/></symbol>
 </svg>

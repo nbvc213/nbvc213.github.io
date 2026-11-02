@@ -14,3 +14,34 @@
 .panel-resizer:hover:after,.panel-resizer:focus-visible:after,.panel-dragging .panel-resizer:after{background:var(--green)}
 .panel-dragging,.panel-dragging *{cursor:col-resize!important;user-select:none!important;-webkit-user-select:none!important}
 @media(max-width:960px){.panel-resizer{display:none}}
+
+/* Keep reading tools within the article column, clear of the TOC progress. */
+@media(min-width:1101px){.page-article .floating-wrap{right:var(--floating-right-offset,244px)}}
+.search-return-tools{display:flex;gap:8px;flex-wrap:wrap}
+.search-return-tools .return-pill{max-width:none;white-space:nowrap}
+@media(max-width:960px){
+  .search-return-tools{flex-basis:100%}
+  .search-return-tools .return-pill{max-width:none}
+  .floating-wrap:has(.search-return-tools){flex-wrap:wrap}
+}
+@media(prefers-reduced-motion:no-preference){
+  .search-dialog[open]{animation:search-enter .18s ease-out}
+  .show-sidebar .reader-sidebar,.show-workspace .workspace-sidebar{animation:directory-left .18s ease-out}
+  .show-toc .reader-toc{animation:directory-right .18s ease-out}
+  @keyframes search-enter{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes directory-left{from{opacity:0;transform:translateX(-100%)}to{opacity:1;transform:translateX(0)}}
+  @keyframes directory-right{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+}
+
+/* Shared sidebar heading baseline and folder separators. */
+.reader-sidebar,.reader-toc{padding-top:24px}
+.sidebar-heading,.toc-top{min-height:36px;box-sizing:border-box;padding-top:0;padding-bottom:12px;margin:0;line-height:24px}
+.sidebar-heading,.toc-top h2{font-size:14px;font-weight:600}
+.toc-top h2{margin:0;line-height:24px}
+.sidebar-folder{margin:0;padding:10px 0}
+.sidebar-folder+.sidebar-folder{border-top:1px solid var(--line)}
+.toc-controls{display:flex;gap:8px;padding:12px 0 0;flex-shrink:0}
+.toc-controls button,.sidebar-foot a{display:inline-flex;align-items:center;border-radius:5px;padding:7px 10px;transition:box-shadow .16s,background .16s}
+.toc-controls button:hover,.sidebar-foot a:hover,.toc-controls button:focus-visible,.sidebar-foot a:focus-visible{background:var(--surface);box-shadow:0 2px 9px color-mix(in srgb,var(--ink) 16%,transparent)}
+.toc-bottom{margin-top:12px}
+.article-heading h1{font-family:var(--font-textEn),var(--font-textZh),sans-serif}

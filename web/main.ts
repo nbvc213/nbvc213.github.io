@@ -19,7 +19,23 @@ import './panels.css';
 import './tables.css';
 
 await loadState();
+if(!page.noteId) {
+  try {
+    const restore=JSON.parse(sessionStorage.getItem('notes.restore')||'null');
+    if(restore){sessionStorage.removeItem('notes.restore');requestAnimationFrame(()=>requestAnimationFrame(()=>scrollTo({top:Math.max(0,Number(restore.y)||0),behavior:'instant'})));}
+  }catch { /* no saved location */ }
+}
 setupResizablePanels();
+function animateDirectory(selector:string,collapsedClass:string,direction:number) {
+  const panel=document.querySelector<HTMLElement>(selector);
+  if(!panel || matchMedia('(prefers-reduced-motion: reduce)').matches){document.body.classList.toggle(collapsedClass);return;}
+  const opening=document.body.classList.contains(collapsedClass);
+  if(opening)document.body.classList.remove(collapsedClass);
+  panel.getAnimations().forEach(a=>a.cancel());
+  const motion=panel.animate(opening?[{transform:`translateX(${direction*100}%)`,opacity:0},{transform:'translateX(0)',opacity:1}]:[{transform:'translateX(0)',opacity:1},{transform:`translateX(${direction*100}%)`,opacity:0}],{duration:180,easing:'ease-out'});
+  if(!opening)motion.finished.then(()=>document.body.classList.add(collapsedClass)).catch(()=>{});
+}
+
 createApp(GlobalUi).mount('#global-ui');
 for (const [id, mode] of [['header-tools', 'header'], ['article-actions', 'actions'], ['table-of-contents', 'toc'], ['continue-reading', 'continue']] as const) {
   if (document.getElementById(id)) createApp(Widgets, { mode }).mount(`#${id}`);
@@ -32,12 +48,12 @@ document.addEventListener('click', event => {
   const target = event.target as HTMLElement;
   if (target.closest('[data-toggle-sidebar]')) {
     if (matchMedia('(max-width: 960px)').matches) document.body.classList.remove('show-sidebar');
-    else document.body.classList.toggle('sidebar-collapsed');
+    else animateDirectory('.reader-sidebar','sidebar-collapsed',-1);
   }
   if (target.closest('[data-workspace-menu]')) document.body.classList.toggle('show-workspace');
   if (target.closest('[data-toggle-toc]')) {
     if (matchMedia('(max-width: 1100px)').matches) document.body.classList.remove('show-toc');
-    else document.body.classList.toggle('toc-collapsed');
+    else animateDirectory('.reader-toc','toc-collapsed',1);
   }
   if (target.closest('.navigation-scrim')) document.body.classList.remove('show-sidebar','show-toc','show-workspace');
 });
@@ -80,6 +96,18 @@ const floating = document.createElement('div'); floating.id = 'floating-tools'; 
 const floatingState = reactive({ annotate: false, comment: '', selectionReady: false, locator: undefined as AnnotationLocator | undefined, anchor: '', start: 0, end: 0, highlightCount: 0, highlightAt: 0, stale: 0 });
 createApp({
   setup() {
+    const fromSearch = new URL(location.href).searchParams.has('q');
+    function returnResults() { ui.search = true; }
+    function returnOrigin() {
+      try {
+        const origin=JSON.parse(sessionStorage.getItem('notes.searchOrigin')||'null');
+        if(origin && new URL(origin.url,location.origin).origin===location.origin) {
+          sessionStorage.setItem('notes.restore',JSON.stringify(origin.position));
+          location.assign(origin.url);return;
+        }
+      } catch { /* use the notes index if the original tab state is unavailable */ }
+      location.assign('/notes/');
+    }
     const back = computed(() => ui.returnStack.at(-1));
     function goBack() {
       const item = ui.returnStack.pop(); if (!item) return;
@@ -98,12 +126,16 @@ createApp({
       floatingState.comment = ''; beginAnnotation(); renderAnnotations(); toast('已保存本机标注');
     }
     return () => h('div', { class: 'floating-wrap' }, [
+      fromSearch ? h('nav', {class:'search-return-tools','aria-label':'搜索导航'}, [
+        h('button',{class:'return-pill',onClick:returnResults},[h(Icon,{name:'search',size:16}),'返回搜索结果']),
+        h('button',{class:'return-pill',onClick:returnOrigin},[h(Icon,{name:'back',size:16}),'返回原页面'])
+      ]) : null,
       back.value ? h('button', { class: 'return-pill', onClick: goBack }, [h(Icon, { name: 'back', size: 16 }), '返回上一处']) : null,
       page.noteId ? h('div', { class: 'reader-floating' }, [
         h('button', { class: 'icon-button mobile-directory', 'aria-label': '打开知识目录', onClick: () => { document.body.classList.remove('show-toc'); document.body.classList.toggle('show-sidebar'); } }, [h(Icon, { name: 'folder' }),h('span','笔记列表')]),
         h('button', { class: 'icon-button mobile-directory', 'aria-label': '打开本文目录', onClick: () => { document.body.classList.remove('show-sidebar'); document.body.classList.toggle('show-toc'); } }, [h(Icon, { name: 'list' }),h('span','本文目录')]),
         h('button', { class: 'icon-button', 'aria-label': '添加标注', title: '添加标注', onClick: beginAnnotation }, h(Icon, { name: 'edit' })),
-        h('button', { class: 'icon-button', 'aria-label': '返回顶部', onClick: () => scrollTo({ top: 0, behavior: 'smooth' }) }, '↑')
+        h('button', { class: 'icon-button', 'aria-label': '返回顶部', onClick: () => scrollTo({ top: 0, behavior: 'smooth' }) }, h(Icon, { name: 'arrow-up', size:20 }))
       ]) : null,
       floatingState.annotate ? h('div', { class: 'annotation-editor' }, [h('strong', '选择正文，留下你的想法'), h('p', floatingState.selectionReady ? '已选择内容，只保存位置和你的备注，不保存原文。' : '现在可以拖动选择需要标记的正文。'), h('textarea', { value: floatingState.comment, placeholder: '写一点自己的理解或疑问…', maxlength: 5000, onInput: (e: Event) => floatingState.comment = (e.target as HTMLTextAreaElement).value }), h('div', [h('button', { class: 'soft-button', onClick: saveAnnotation, disabled: !floatingState.selectionReady }, '保存标注'), h('button', { class: 'text-button', onClick: beginAnnotation }, '取消')])]) : null,
       floatingState.highlightCount ? h('div', { class: 'matches-toolbar' }, [h('span', `${floatingState.highlightAt + 1} / ${floatingState.highlightCount} 处匹配`), h('button', { onClick: () => jumpMatch(-1), 'aria-label': '上一个匹配' }, '↑'), h('button', { onClick: () => jumpMatch(1), 'aria-label': '下一个匹配' }, '↓'), h('button', { onClick: clearMatches, 'aria-label': '清除搜索高亮' }, '×')]) : null,

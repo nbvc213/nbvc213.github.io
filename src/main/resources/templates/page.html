@@ -10,7 +10,7 @@
   <meta property="og:type" th:content="${kind == 'article' ? 'article' : 'website'}">
   <link rel="canonical" th:href="${site.url + url}">
   <link rel="icon" href="/media/favicon.svg" type="image/svg+xml">
-  <script>try{const p=JSON.parse(localStorage.getItem('notes.preferences')||'{}');document.documentElement.dataset.theme=p.theme==='system'||!p.theme?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p.theme;document.documentElement.dataset.accent=['forest','ocean','violet','amber','rose','slate'].includes(p.accent)?p.accent:'ocean';document.documentElement.dataset.lines=String(p.lines??false);document.documentElement.dataset.wrap=String(p.wrap??false)}catch{}</script>
+  <script src="/media/reading-preferences.js"></script>
   <link rel="stylesheet" th:href="${stylesheet}">
   <script id="page-data" type="application/json" th:utext="${pageJson}"></script>
   <script id="toc-data" type="application/json" th:utext="${tocJson}"></script>
