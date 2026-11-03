@@ -183,8 +183,11 @@ public final class SiteBuilder {
         if (Boolean.TRUE.equals(meta.get("draft"))) return;
         String id = Objects.toString(meta.get("id"), "");
         if (!id.matches("[a-z][a-z0-9-]*") || !ids.add(id)) throw new IllegalArgumentException("Invalid or duplicate note id: " + id);
+        String directoryName = path.getParent().getFileName().toString();
+        folders.stream().filter(f -> Objects.equals(f.get("name"), directoryName)).findFirst()
+                .ifPresent(f -> meta.put("folder", f.get("id")));
+        meta.put("title", path.getFileName().toString().replaceFirst("\\.md$", ""));
         if (!folderIds.contains(meta.get("folder"))) throw new IllegalArgumentException("Unknown folder in " + path);
-        if (!(meta.get("title") instanceof String t) || t.isBlank()) throw new IllegalArgumentException("Missing title: " + path);
         meta.putIfAbsent("order", 1000); meta.putIfAbsent("tags", List.of()); meta.putIfAbsent("pinned", false);
         if (!(meta.get("tags") instanceof List<?>)) throw new IllegalArgumentException("Tags must be a list: " + path);
         meta.put("date", date(meta.get("date"))); meta.put("updated", date(meta.getOrDefault("updated", meta.get("date"))));

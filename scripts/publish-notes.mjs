@@ -18,7 +18,15 @@ try{
  if(!existsSync('node_modules'))npmTask('ci');
  npmTask('run build');npmTask('run test:content');npmTask('run check:release');
  if(checkOnly){console.log('检查完成：未提交、未推送、未触发部署。');process.exit(0);}
- console.log('检查远端更新……');git(['fetch','origin',defaultBranch]);
+ console.log('检查远端更新……');
+ for(let attempt=1;attempt<=3;attempt++){
+  try{git(['fetch','origin',defaultBranch]);break;}
+  catch(error){
+   if(attempt===3||!/Connection was reset|SSL_ERROR_SYSCALL|curl (?:28|35|56)|Could not resolve|Failed to connect|Connection timed out/i.test(error.message))throw error;
+   console.log('远端连接暂时失败，正在重试（'+(attempt+1)+'/3）……');
+   await new Promise(resolve=>setTimeout(resolve,attempt*2000));
+  }
+ }
  if(Number(git(['rev-list','--count','HEAD..origin/'+defaultBranch]).text)>0)throw new Error('远端有新提交。请先处理本地修改并同步远端，再重试；脚本不会自动合并。');
  const paths=['content','public','config','web','src','scripts','package.json','package-lock.json','pom.xml','.github/workflows/site.yml','scripts/publish-notes.mjs','publish-notes.bat','docs/一键更新笔记.md','docs/发布与回退.md','README.md'].filter(p=>existsSync(p));
  git(['add','-A','--',...paths]);

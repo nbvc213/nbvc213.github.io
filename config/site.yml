@@ -1,27 +1,17 @@
 title: "我的笔记"
-subtitle: "记录所学，连接所知。"
 description: "编程、学习与生活的个人笔记。"
 url: "https://nbvc213.github.io"
-author: "nbvc213"
 folders:
   - id: java
     name: Java 笔记
-    eyebrow: DEVELOPMENT
     description: 从语言基础到数据库与 Web，循序渐进地建立知识体系。
-    color: green
   - id: banking
     name: 银从笔记
-    eyebrow: FINANCE & BANKING
     description: 梳理经济金融基础、银行业务与法律法规。
-    color: amber
   - id: miscellaneous
     name: 杂项笔记
-    eyebrow: EXPLORATIONS
     description: 开发环境、工具使用，以及值得记录的实践。
-    color: blue
 
   - id: examples
     name: 语法测试
-    eyebrow: SYNTAX LAB
     description: 排版、内容块、代码与关联跳转的完整测试样例。
-    color: blue

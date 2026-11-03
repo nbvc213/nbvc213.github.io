@@ -1,3 +1,34 @@
+# 当前笔记命名与配置规则（2026-11-03）
+
+笔记存放目录即网站分类名，Markdown 文件名（不含 `.md`）即网站文章标题。例如：`content/Java 笔记/01 引言 (Java).md`。不再填写 `title`、`folder`。修改文件名会修改显示标题；移动到另一个已配置的分类目录会改变分类，`id` 保持不变时网址不变。
+
+Windows 不允许文件名包含半角 `: / \ ? * " < > |`，请使用全角对应字符，例如 `Vue 企业开发 · 第一天：从零读懂一个 Vue 页面.md`。文件名不得以空格或英文句点结尾，同一分类内不能重名。
+
+最小笔记头部：
+
+```yaml
+---
+id: my-stable-note
+date: 2026-11-03
+---
+```
+
+`id` 是稳定网址标识，必须唯一且由小写英文、数字、连字符组成；保留它是为避免改名破坏旧链接。`order` 控制章节顺序（省略为 1000），`date`、`updated` 控制日期，`tags` 用于筛选，`description` 可覆盖自动摘要，`legacyUrls` 保留旧站链接。`pinned: false`、`draft: false`、`tags: []` 都可省略；`draft: true` 才表示不发布。date 为必填日期；updated 省略时使用 date。
+
+`config/site.yml` 保留：网站 `title`（浏览器标题）、`description`（搜索引擎与分享摘要）、`url`（规范链接）；每个分类的 `id`（稳定分类网址）、`name`（必须与 content 下目录名一致）、可选 `description`（分类页说明）。删除了未使用的 subtitle、author、eyebrow，以及已由主题统一控制的分类 color。
+
+新增分类时，在 config 注册 id/name，再创建同名中文目录。新建笔记也可以使用：
+
+```powershell
+npm.cmd run new-note -- --folder "Java 笔记" --title "新笔记"
+```
+
+生成草稿使用标题作为文件名，生成稳定 id；完成后删除 `draft: true`。代码目录 config、web、src、scripts、public 等不改中文。`public` 中的图片路径保持原样。此次迁移备份与新旧路径对照位于 `.tools/naming-migration-backup` 和 `.tools/naming-migration.json`，不会发布。
+
+以下为原使用手册；涉及旧英文目录及 title/folder 元数据的历史示例，以以上新规则为准，Markdown 内容语法不变。
+
+---
+
 > 发布方式更新：默认分支推送后自动构建并部署；手动 publish 入口仍可重试发布。日常修改笔记后双击根目录 publish-notes.bat，详见 [一键更新笔记](docs/一键更新笔记.md)。本地目录可以改名，不要删除 .git。
 
 # 我的笔记：使用与编写手册

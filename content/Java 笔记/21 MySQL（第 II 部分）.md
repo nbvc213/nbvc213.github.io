@@ -1,0 +1,3875 @@
+---
+id: java-21
+order: 21
+date: 2026-08-17
+updated: 2026-08-17
+tags: ["MySQL"]
+legacyUrls:
+  - "/java/笔记/2026-08-17-21-MySQL-第-II-部分.html"
+---
+
+## 分组查询
+
+**分组查询**用于按照一个或多个字段将数据划分成不同的组，再对每一组分别进行统计计算。例如，需要计算不同岗位的平均工资，就要先按照岗位分组，再分别计算每个岗位的平均工资。
+
+分组查询的核心过程可以理解为：
+
+```text
+原始数据
+   ↓
+WHERE 过滤
+   ↓
+GROUP BY 分组
+   ↓
+对每组执行聚合函数
+   ↓
+HAVING 对分组结果过滤
+   ↓
+返回查询结果
+```
+
+---
+
+### GROUP BY
+
+`GROUP BY` 用于按照指定字段进行分组，既可以按照一个字段分组，也可以按照多个字段联合分组。
+
+基本语法：
+
+```sql
+GROUP BY 字段;
+```
+
+多个字段联合分组：
+
+```sql
+GROUP BY 字段1, 字段2, ...;
+```
+
+#### 单字段分组
+
+计算每种岗位的平均工资：
+
+```sql
+SELECT job, AVG(sal)
+FROM emp
+GROUP BY job;
+```
+
+执行逻辑可以理解为：
+
+```text
+emp 中的员工
+     ↓
+按照 job 分组
+     ↓
+┌───────────┐
+│ CLERK     │ → AVG(sal)
+├───────────┤
+│ MANAGER   │ → AVG(sal)
+├───────────┤
+│ SALESMAN  │ → AVG(sal)
+├───────────┤
+│ ANALYST   │ → AVG(sal)
+└───────────┘
+```
+
+最终每个岗位返回一条统计结果。
+
+查询每个部门的最高工资：
+
+```sql
+SELECT deptno, MAX(sal)
+FROM emp
+GROUP BY deptno;
+```
+
+这里先根据 `deptno` 将员工划分到不同部门，再分别对每个部门执行 `MAX(sal)`。
+
+#### 多字段联合分组
+
+`GROUP BY` 后可以同时指定多个字段。例如，查询**每个部门中不同岗位的平均工资**：
+
+```sql
+SELECT deptno, job, AVG(sal)
+FROM emp
+GROUP BY deptno, job;
+```
+
+此时按照 `deptno + job` 的组合进行分组，而不是分别独立按照 `deptno` 和 `job` 分组。
+
+```text
+deptno   job
+------   --------
+10       MANAGER    → 一组
+10       CLERK      → 一组
+20       MANAGER    → 一组
+20       CLERK      → 一组
+30       SALESMAN   → 一组
+```
+
+只有 `deptno` 和 `job` 的组合相同，才属于同一组。
+
+> **结论：** `GROUP BY` 后存在多个字段时，会按照**多个字段组成的组合值联合分组**。
+
+---
+
+### GROUP BY 与 SELECT
+
+分组以后，一组数据中的多行最终需要形成一行统计结果，因此 `SELECT` 中的字段必须能够确定这一组最终应该显示什么值。**基础阶段可以先记住：存在 `GROUP BY` 时，`SELECT` 后的普通字段应当是参与分组的字段，其他数据通常通过聚合函数进行统计。**
+
+例如：
+
+```sql
+SELECT deptno, AVG(sal)
+FROM emp
+GROUP BY deptno;
+```
+
+这条 SQL 是合理的，因为 `deptno` 是分组字段，`AVG(sal)` 是每组计算得到的聚合结果。
+
+下面的写法则存在问题：
+
+```sql
+SELECT ename, deptno, AVG(sal)
+FROM emp
+GROUP BY deptno;
+```
+
+按照 `deptno` 分组以后，一个部门中可能存在多个员工：
+
+```text
+部门 20
+
+SMITH
+JONES
+SCOTT
+ADAMS
+FORD
+```
+
+这一组最终只返回一行，但 `ename` 应该显示哪个员工并不确定，因此在 MySQL 默认启用 `ONLY_FULL_GROUP_BY` 的情况下，这类查询通常会被拒绝。
+
+如果只需要部门和平均工资，应写成：
+
+```sql
+SELECT deptno, AVG(sal)
+FROM emp
+GROUP BY deptno;
+```
+
+如果确实需要按照部门和员工进行分组，则可以写成：
+
+```sql
+SELECT deptno, ename, AVG(sal)
+FROM emp
+GROUP BY deptno, ename;
+```
+
+但这样会改变原来的分组粒度，因为原本是“每个部门一组”，现在变成了“每个部门中的每个员工一组”。
+
+> **易错点：** 不要为了让 SQL 不报错就随意把字段加入 `GROUP BY`。**增加分组字段会改变分组粒度，也可能改变查询结果的业务含义。**
+
+严格来说，MySQL 还允许查询某些能够由分组字段唯一确定的非聚合字段，这涉及函数依赖等规则。**基础阶段先掌握最稳定的写法即可：`SELECT` 中优先只出现分组字段和聚合结果。**
+
+---
+
+### HAVING
+
+`WHERE` 和 `HAVING` 都能够过滤数据，但二者处理数据的阶段不同：
+
+- `WHERE`：在**分组之前**过滤原始记录。
+- `HAVING`：在**分组之后**过滤分组或聚合结果。
+
+例如，先查询每个部门的平均工资：
+
+```sql
+SELECT deptno, AVG(sal)
+FROM emp
+GROUP BY deptno;
+```
+
+如果只保留平均工资高于 `2000` 的部门，就需要在平均工资计算完成以后继续过滤：
+
+```sql
+SELECT deptno, AVG(sal)
+FROM emp
+GROUP BY deptno
+HAVING AVG(sal) > 2000;
+```
+
+执行过程可以理解为：
+
+```text
+emp
+ ↓
+按照 deptno 分组
+ ↓
+计算每组 AVG(sal)
+ ↓
+HAVING AVG(sal) > 2000
+ ↓
+只保留平均工资高于 2000 的部门
+```
+
+这里不能写成：
+
+```sql
+WHERE AVG(sal) > 2000
+```
+
+因为执行 `WHERE` 时还没有完成分组，也还没有产生 `AVG(sal)` 的计算结果。
+
+---
+
+### WHERE 与 HAVING 的选择
+
+如果一个条件可以在分组之前完成过滤，通常优先使用 `WHERE`，因为可以先减少参与后续分组和聚合的数据量。
+
+例如，要求排除 20 部门，再计算其他部门的平均工资，推荐写成：
+
+```sql
+SELECT deptno, AVG(sal)
+FROM emp
+WHERE deptno <> 20
+GROUP BY deptno;
+```
+
+执行过程为：
+
+```text
+先过滤 20 部门
+      ↓
+对剩余数据分组
+      ↓
+计算平均工资
+```
+
+也可以写成：
+
+```sql
+SELECT deptno, AVG(sal)
+FROM emp
+GROUP BY deptno
+HAVING deptno <> 20;
+```
+
+但这种写法会先完成分组，再排除 20 部门。
+
+如果过滤条件本身依赖聚合结果，就必须使用 `HAVING`。例如，查询平均工资高于 `2000` 的部门：
+
+```sql
+SELECT deptno, AVG(sal)
+FROM emp
+GROUP BY deptno
+HAVING AVG(sal) > 2000;
+```
+
+因为 `AVG(sal) > 2000` 只有在每个部门的平均工资计算完成后才能判断。
+
+| 过滤内容           | 使用                 |
+| ------------------ | -------------------- |
+| 原始记录           | `WHERE`              |
+| 分组、聚合后的结果 | `HAVING`             |
+| 两者都能完成       | 通常优先考虑 `WHERE` |
+
+**能够在 `WHERE` 阶段完成的过滤通常尽量提前完成，可以减少后续需要参与分组和聚合的数据量。**
+
+> **易错点：** `WHERE` 和 `HAVING` 的核心区别不是简单的“哪个效率更高”，而是**过滤发生的阶段不同**。应先判断条件属于分组前还是分组后，再决定使用哪个子句。
+
+---
+
+### HAVING 与 GROUP BY
+
+`HAVING` 最常见的用途是配合 `GROUP BY`，对分组后的结果继续过滤：
+
+```sql
+SELECT deptno, AVG(sal)
+FROM emp
+GROUP BY deptno
+HAVING AVG(sal) > 2000;
+```
+
+但不能绝对记成“没有 `GROUP BY` 就不能使用 `HAVING`”。MySQL 中，即使没有显式使用 `GROUP BY`，聚合查询仍可以把符合条件的全部数据作为一个整体分组。
+
+例如：
+
+```sql
+SELECT AVG(sal) AS avg_sal
+FROM emp
+HAVING avg_sal > 2000;
+```
+
+这条 SQL 没有显式编写 `GROUP BY`，但仍然可以使用 `HAVING` 判断整体平均工资。**因此，更准确的理解是：`HAVING` 主要用于过滤分组或聚合后的结果，而 `WHERE` 用于过滤分组前的原始记录。**
+
+---
+
+### HAVING 使用 SELECT 别名
+
+MySQL 允许在 `HAVING` 中使用 `SELECT` 定义的列别名。
+
+例如：
+
+```sql
+SELECT deptno, AVG(sal) AS avg_sal
+FROM emp
+GROUP BY deptno
+HAVING avg_sal > 2000;
+```
+
+等价于：
+
+```sql
+SELECT deptno, AVG(sal) AS avg_sal
+FROM emp
+GROUP BY deptno
+HAVING AVG(sal) > 2000;
+```
+
+其中 `AVG(sal) AS avg_sal` 定义了别名 `avg_sal`，后面的 `HAVING avg_sal > 2000` 可以直接使用这个别名。这样可以减少重复表达式，使 SQL 更容易阅读。按照 SQL 的逻辑执行顺序，`HAVING` 位于 `SELECT` 之前，但 MySQL 对别名引用进行了扩展处理，因此允许这种写法；不同数据库对此的支持可能不同。
+
+---
+
+### 组内排序
+
+有时不仅需要分组统计，还需要取得**每个分组内部按照某种顺序排列后的部分数据**。例如，找出每种岗位中工资最高的两个员工编号，可以利用 MySQL 的 `GROUP_CONCAT()` 和 `SUBSTRING_INDEX()` 实现。
+
+#### GROUP_CONCAT()
+
+`GROUP_CONCAT()` 是一个聚合函数，可以把同一组中的多个值拼接成一个字符串。
+
+例如：
+
+```sql
+SELECT job, GROUP_CONCAT(empno)
+FROM emp
+GROUP BY job;
+```
+
+假设 `CLERK` 岗位存在多个员工，结果可能类似：
+
+```text
+CLERK    7369,7876,7900,7934
+```
+
+还可以在 `GROUP_CONCAT()` 内部指定排序方式：
+
+```sql
+SELECT job,
+       GROUP_CONCAT(empno ORDER BY sal DESC)
+FROM emp
+GROUP BY job;
+```
+
+这样会先在每个岗位内部按照 `sal` 从高到低排列，再拼接员工编号。
+
+```text
+CLERK 这一组
+    ↓
+按照 sal DESC 排序
+    ↓
+7934
+7876
+7900
+7369
+    ↓
+GROUP_CONCAT()
+    ↓
+'7934,7876,7900,7369'
+```
+
+#### SUBSTRING_INDEX()
+
+`SUBSTRING_INDEX()` 可以根据指定分隔符截取字符串。
+
+基本格式：
+
+```sql
+SUBSTRING_INDEX(字符串, 分隔符, 次数)
+```
+
+例如：
+
+```sql
+SELECT SUBSTRING_INDEX('A,B,C,D', ',', 2);
+```
+
+结果为：
+
+```text
+A,B
+```
+
+表示从左向右按照逗号分隔，保留前两个部分。
+
+#### 查询每个岗位工资最高的两个员工
+
+结合两个函数：
+
+```sql
+SELECT job,
+       SUBSTRING_INDEX(
+           GROUP_CONCAT(empno ORDER BY sal DESC),
+           ',',
+           2
+       ) AS top_two
+FROM emp
+GROUP BY job;
+```
+
+执行过程为：
+
+```text
+1. 按照 job 分组
+       ↓
+2. 每组内部按照 sal 降序
+       ↓
+3. GROUP_CONCAT() 拼接员工编号
+       ↓
+4. SUBSTRING_INDEX() 截取前两个编号
+```
+
+假设某一岗位内部拼接结果为：
+
+```text
+7839,7782,7566,7698
+```
+
+执行：
+
+```sql
+SUBSTRING_INDEX(..., ',', 2)
+```
+
+得到：
+
+```text
+7839,7782
+```
+
+也就是工资排序最靠前的两个员工编号。
+
+> **注意：** 这种写法取得的是排序后的**前两个员工**，并没有真正处理“工资并列名次”的排名规则。例如第二名存在多人并列时，它仍然只会截取两个编号。当前阶段主要用于理解 `GROUP_CONCAT()` 的组内排序和字符串处理，不必将其作为通用排名方案。
+
+---
+
+### 单表 DQL 执行顺序
+
+目前学习到的单表查询可以组合成：
+
+```sql
+SELECT ...
+FROM ...
+WHERE ...
+GROUP BY ...
+HAVING ...
+ORDER BY ...;
+```
+
+SQL 的书写顺序是：
+
+```text
+SELECT
+FROM
+WHERE
+GROUP BY
+HAVING
+ORDER BY
+```
+
+但理解查询过程时，应重点掌握下面的**逻辑执行顺序**：
+
+```text
+1. FROM
+      ↓
+2. WHERE
+      ↓
+3. GROUP BY
+      ↓
+4. HAVING
+      ↓
+5. SELECT
+      ↓
+6. ORDER BY
+```
+
+各阶段的主要作用如下：
+
+| 顺序 | 子句       | 主要作用               |
+| ---- | ---------- | ---------------------- |
+| 1    | `FROM`     | 确定数据来源           |
+| 2    | `WHERE`    | 过滤分组前的原始记录   |
+| 3    | `GROUP BY` | 对剩余记录进行分组     |
+| 4    | `HAVING`   | 过滤分组或聚合后的结果 |
+| 5    | `SELECT`   | 确定最终返回的内容     |
+| 6    | `ORDER BY` | 对最终查询结果排序     |
+
+例如：
+
+```sql
+SELECT deptno,
+       AVG(sal) AS avg_sal
+FROM emp
+WHERE job <> 'CLERK'
+GROUP BY deptno
+HAVING AVG(sal) > 2000
+ORDER BY avg_sal DESC;
+```
+
+可以按照下面的顺序理解：
+
+```text
+FROM emp
+    ↓
+从 emp 获取数据
+
+WHERE job <> 'CLERK'
+    ↓
+排除 CLERK
+
+GROUP BY deptno
+    ↓
+按照部门分组
+
+HAVING AVG(sal) > 2000
+    ↓
+只保留平均工资高于 2000 的部门
+
+SELECT deptno, AVG(sal)
+    ↓
+生成最终需要显示的数据
+
+ORDER BY avg_sal DESC
+    ↓
+按照平均工资从高到低排列
+```
+
+**这个逻辑执行顺序主要用于理解 SQL 各子句之间的数据处理关系，并不等同于 MySQL 内部真正执行 SQL 时固定不变的物理执行步骤，数据库优化器可能根据实际情况调整具体执行方式。**
+
+> **结论：** 单表 DQL 的逻辑执行顺序重点记忆为：**`FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY`**。
+
+## 连接查询
+
+**连接查询（Join Query）**是从两张或多张表中联合获取数据的查询方式。单表查询只能使用一张表中的数据，当一个业务结果需要同时使用多张表中的字段时，就需要通过连接查询将相关记录组合起来。
+
+例如，`emp` 表保存员工姓名和部门编号，`dept` 表保存部门编号和部门名称。如果要查询“每个员工所在的部门名称”，仅查询其中一张表无法得到完整结果，因此需要根据两张表共同拥有的 `deptno` 建立连接：
+
+```text
+emp.deptno = dept.deptno
+```
+
+连接查询按照语法和连接方式可以进行如下分类：
+
+- 按语法形式：SQL92、SQL99。
+- 按连接方式：内连接、外连接、全连接。
+  - 内连接：等值连接、非等值连接、自连接。
+  - 外连接：左外连接、右外连接。
+
+现代开发中主要使用 **SQL99 连接语法**。
+
+---
+
+### SQL92 与 SQL99
+
+SQL92 中通常将多张表使用逗号写在 `FROM` 后，再通过 `WHERE` 编写连接条件：
+
+```sql
+SELECT e.ename, d.dname
+FROM emp e, dept d
+WHERE e.deptno = d.deptno;
+```
+
+SQL99 使用 `JOIN ... ON ...` 明确表示表连接：
+
+```sql
+SELECT e.ename, d.dname
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno;
+```
+
+两种写法都可以完成连接查询，但现代开发更推荐 SQL99。它能够把**表与表之间的连接条件**放在 `ON` 中，把后续真正用于筛选数据的条件放在 `WHERE` 中，结构更加清楚。
+
+例如：
+
+```sql
+SELECT e.ename, d.dname
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno
+WHERE e.sal > 2000;
+```
+
+这里：
+
+```text
+e.deptno = d.deptno
+```
+
+负责说明 `emp` 和 `dept` 应该如何关联，而：
+
+```text
+e.sal > 2000
+```
+
+负责筛选工资高于 `2000` 的员工。
+
+---
+
+### 笛卡尔积
+
+两张表进行连接查询时，如果没有指定任何连接条件，会得到两张表中记录的所有组合，这种现象称为**笛卡尔积（Cartesian Product）**。
+
+例如：
+
+```sql
+SELECT e.ename, d.dname
+FROM emp e, dept d;
+```
+
+假设：
+
+```text
+emp  表有 14 条记录
+dept 表有 4 条记录
+```
+
+从逻辑结果上会产生：
+
+```text
+14 × 4 = 56
+```
+
+种记录组合。
+
+这 56 条结果中的大多数并不符合“员工属于哪个部门”的真实业务关系，因此必须根据两个表之间的关联字段添加连接条件：
+
+```sql
+SELECT e.ename, d.dname
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno;
+```
+
+这里通过：
+
+```text
+员工的部门编号 = 部门的部门编号
+```
+
+只保留真正能够匹配的记录。
+
+> **易错点：** 笛卡尔积描述的是没有连接条件时产生的**逻辑组合结果**。不要简单理解为数据库内部执行连接时一定先完整生成所有组合，再逐条过滤；MySQL 优化器会根据索引、连接算法等因素决定实际执行方式。
+
+连接多张表时通常建议为表设置简短别名：
+
+```sql
+SELECT e.ename, d.dname
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno;
+```
+
+其中 `e` 表示 `emp`，`d` 表示 `dept`。表别名可以减少重复书写，并且当不同表中存在同名字段时，可以明确字段属于哪张表，例如：
+
+```text
+e.deptno
+d.deptno
+```
+
+---
+
+### 内连接
+
+**内连接（INNER JOIN）只保留两张表中能够满足连接条件的记录。** 如果某条记录在另一张表中找不到符合条件的数据，该记录就不会出现在结果中。
+
+基本语法：
+
+```sql
+SELECT ...
+FROM 表1
+INNER JOIN 表2
+ON 连接条件;
+```
+
+其中 `INNER` 可以省略，因此：
+
+```sql
+INNER JOIN
+```
+
+通常直接写成：
+
+```sql
+JOIN
+```
+
+#### 等值连接
+
+当连接条件使用 `=` 判断两个字段相等时，可以称为**等值连接**。
+
+例如，查询每个员工所在的部门名称：
+
+```sql
+SELECT e.ename, d.dname
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno;
+```
+
+连接过程可以理解为：
+
+```text
+emp                            dept
+
+ename    deptno                deptno    dname
+-----    ------                ------    ----------
+SMITH      20        ←匹配→      20      RESEARCH
+ALLEN      30        ←匹配→      30      SALES
+CLARK      10        ←匹配→      10      ACCOUNTING
+```
+
+匹配依据是：
+
+```sql
+e.deptno = d.deptno
+```
+
+最终查询结果同时获得员工姓名和对应的部门名称。
+
+#### 非等值连接
+
+连接条件不一定必须使用 `=`。如果通过范围等非等量关系建立连接，可以称为**非等值连接**。
+
+例如，`emp.sal` 保存员工工资，`salgrade` 中通过 `losal` 和 `hisal` 保存每个工资等级对应的区间。查询每个员工的工资等级：
+
+```sql
+SELECT e.ename, e.sal, s.grade
+FROM emp e
+JOIN salgrade s
+ON e.sal BETWEEN s.losal AND s.hisal;
+```
+
+假设：
+
+```text
+员工工资：1600
+
+工资等级：
+GRADE    LOSAL    HISAL
+3        1401     2000
+```
+
+判断：
+
+```text
+1401 <= 1600 <= 2000
+```
+
+条件成立，因此该员工属于工资等级 `3`。
+
+这里连接条件不是两个字段相等，而是：
+
+```sql
+e.sal BETWEEN s.losal AND s.hisal
+```
+
+所以属于非等值连接。
+
+#### 自连接
+
+**自连接（Self Join）**是将同一张表按照不同角色看成两张逻辑表，再让它自己和自己连接。
+
+`emp` 表中：
+
+- `empno`：当前员工编号；
+- `mgr`：当前员工直属领导的员工编号。
+
+因此，要查询员工的直属领导，需要在同一张 `emp` 表中寻找：
+
+```text
+员工的 mgr = 领导的 empno
+```
+
+可以给同一张表设置两个不同别名：
+
+```sql
+SELECT e.ename AS 员工名,
+       l.ename AS 领导名
+FROM emp e
+JOIN emp l
+ON e.mgr = l.empno;
+```
+
+这里：
+
+```text
+emp e → 把 emp 看成“员工表”
+emp l → 把 emp 看成“领导表”
+```
+
+例如：
+
+```text
+员工表 e
+
+ename    mgr
+-----    ----
+SMITH    7902
+FORD     7566
+```
+
+再从“领导表”中寻找相应的员工编号：
+
+```text
+领导表 l
+
+empno    ename
+-----    -----
+7902     FORD
+7566     JONES
+```
+
+根据：
+
+```sql
+e.mgr = l.empno
+```
+
+可以得到：
+
+```text
+SMITH → FORD
+FORD  → JONES
+```
+
+自连接并不是数据库中真的存在两张 `emp` 表，而是通过不同别名让同一张表承担不同角色。
+
+使用内连接进行自连接时，如果某个员工没有直属领导，就无法匹配到对应记录。例如 `KING` 的 `mgr` 为 `NULL`，因此使用上面的内连接时不会查询到 `KING`。
+
+---
+
+### 外连接
+
+**外连接（Outer Join）除了返回符合连接条件的记录，还会完整保留其中一侧表的数据。** 如果被保留的一侧存在无法匹配的记录，另一侧对应字段会使用 `NULL` 补充。
+
+外连接主要包括：
+
+```text
+LEFT JOIN  → 保留左表全部记录
+RIGHT JOIN → 保留右表全部记录
+```
+
+`OUTER` 可以省略，因此实际开发中通常直接写：
+
+```sql
+LEFT JOIN
+RIGHT JOIN
+```
+
+#### 左外连接
+
+左外连接的基本格式为：
+
+```sql
+表A LEFT JOIN 表B
+ON 连接条件
+```
+
+其规则是：
+
+1. 返回 A、B 两张表中能够正常匹配的记录。
+2. **无论是否能够匹配，左表 A 的记录都必须保留。**
+3. 如果左表某条记录无法在右表找到对应数据，右表字段使用 `NULL` 补充。
+
+例如，查询所有部门以及各部门下的员工：
+
+```sql
+SELECT d.*, e.ename
+FROM dept d
+LEFT JOIN emp e
+ON d.deptno = e.deptno;
+```
+
+这里：
+
+```text
+左表：dept
+右表：emp
+```
+
+因此所有部门都会出现在结果中。假设编号为 `40` 的部门当前没有员工，也仍然会返回：
+
+```text
+deptno    dname        ename
+------    ----------   -----
+40        OPERATIONS   NULL
+```
+
+#### 右外连接
+
+右外连接的基本格式为：
+
+```sql
+表A RIGHT JOIN 表B
+ON 连接条件
+```
+
+其规则与左连接相反：**右表 B 的全部记录必须保留**。
+
+例如，同样查询所有部门及其员工，可以交换表的位置后使用右连接：
+
+```sql
+SELECT d.*, e.ename
+FROM emp e
+RIGHT JOIN dept d
+ON d.deptno = e.deptno;
+```
+
+这里 `dept` 位于 `RIGHT JOIN` 的右侧，因此所有部门都会被保留。
+
+左连接和右连接本质上只是“哪一侧的数据必须全部保留”不同。因此：
+
+```sql
+A LEFT JOIN B
+```
+
+通常可以通过交换两张表的位置改写为：
+
+```sql
+B RIGHT JOIN A
+```
+
+在实际开发中，为了阅读方便，通常优先选择能够更加自然表达业务含义的写法。
+
+---
+
+### 使用外连接解决自连接的数据缺失
+
+之前查询员工及直属领导时使用内连接：
+
+```sql
+SELECT e.ename AS 员工名,
+       l.ename AS 领导名
+FROM emp e
+JOIN emp l
+ON e.mgr = l.empno;
+```
+
+由于 `KING` 没有直属领导：
+
+```text
+KING.mgr = NULL
+```
+
+所以无法匹配领导记录，最终不会出现在内连接结果中。
+
+如果需求变成“查询**所有员工**及其直属领导”，就应该把员工一侧作为必须保留的数据：
+
+```sql
+SELECT e.ename AS 员工名,
+       l.ename AS 领导名
+FROM emp e
+LEFT JOIN emp l
+ON e.mgr = l.empno;
+```
+
+此时 `KING` 也会保留，只是领导字段为：
+
+```text
+KING    NULL
+```
+
+同一查询也可以改写成右连接：
+
+```sql
+SELECT e.ename AS 员工名,
+       l.ename AS 领导名
+FROM emp l
+RIGHT JOIN emp e
+ON e.mgr = l.empno;
+```
+
+> **结论：** 判断使用内连接还是外连接的关键，是明确**没有匹配数据的记录是否仍然需要保留**。只需要匹配成功的数据使用内连接；如果某一侧的数据无论是否匹配都必须保留，则使用外连接。
+
+---
+
+### 全连接
+
+**全连接（FULL OUTER JOIN）会完整保留左右两张表的数据。** 能够匹配的记录正常组合；不能匹配的记录仍然保留，并在另一侧使用 `NULL` 补充。
+
+可以理解为同时具有左连接和右连接的保留效果：
+
+```text
+左表全部记录
+      +
+右表全部记录
+      +
+能够匹配的记录合并
+```
+
+例如客户表和订单表进行全连接时：
+
+- 有订单的客户正常匹配；
+- 没有订单的客户仍然保留，订单字段为 `NULL`；
+- 如果存在找不到客户的订单，该订单也仍然保留，客户字段为 `NULL`。
+
+标准形式类似：
+
+```sql
+SELECT c.*, o.*
+FROM t_customer c
+FULL OUTER JOIN t_order o
+ON c.cid = o.cid;
+```
+
+> **注意：** **MySQL 不支持直接使用 `FULL JOIN` / `FULL OUTER JOIN` 语法**，因此上面的 SQL 不能直接作为 MySQL 查询执行。当前阶段重点理解全连接的含义即可。
+
+---
+
+### 多表连接
+
+连接查询并不局限于两张表，也可以连续连接三张甚至更多张表。核心思想始终相同：**明确当前需要哪些表，并逐步确定每两张相关表之间的连接条件。**
+
+例如，查询每个员工的姓名、所在部门名称以及工资等级，需要使用：
+
+```text
+emp
+  │
+  │ e.deptno = d.deptno
+  ▼
+dept
+
+emp
+  │
+  │ e.sal BETWEEN s.losal AND s.hisal
+  ▼
+salgrade
+```
+
+SQL：
+
+```sql
+SELECT e.ename,
+       d.dname,
+       s.grade
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno
+JOIN salgrade s
+ON e.sal BETWEEN s.losal AND s.hisal;
+```
+
+执行逻辑可以理解为：
+
+1. `emp` 与 `dept` 根据部门编号建立连接：
+
+   ```sql
+   e.deptno = d.deptno
+   ```
+
+   从而得到员工对应的部门信息。
+
+2. 再将前面的结果与 `salgrade` 根据工资区间建立连接：
+
+   ```sql
+   e.sal BETWEEN s.losal AND s.hisal
+   ```
+
+   从而确定每个员工对应的工资等级。
+
+最终可以同时获得：
+
+```text
+员工姓名    部门名称    工资等级
+```
+
+多表连接时，SQL 通常按照以下结构逐个加入需要的表：
+
+```sql
+SELECT ...
+FROM 表1
+JOIN 表2
+ON 表1与表2的连接条件
+JOIN 表3
+ON 表3与已有数据的连接条件
+JOIN 表4
+ON ...
+```
+
+> **易错点：** 多表连接最重要的不是记忆固定写法，而是先明确**每张表提供什么数据，以及表与表之间通过什么字段或条件建立关系**。连接条件缺失或写错，往往会产生错误的数据组合。
+
+---
+
+## 子查询
+
+**子查询（Subquery）**是嵌套在其他 SQL 语句中的查询。当前阶段主要学习在 `WHERE`、`FROM` 和 `SELECT` 中使用子查询，通过一个查询的结果为另一个查询提供条件、数据来源或字段值。
+
+可以先从结构上理解：
+
+```text
+外层查询
+   ↓
+需要某个条件、结果集或具体值
+   ↓
+通过内部 SELECT 查询得到
+   ↓
+将子查询结果交给外层查询继续处理
+```
+
+---
+
+### WHERE 中使用子查询
+
+`WHERE` 中的子查询通常用于**先计算出一个条件所需要的值，再由外层查询进行过滤**。
+
+例如，查询工资高于全体员工平均工资的员工姓名和工资。
+
+不能直接写成：
+
+```sql
+SELECT ename, sal
+FROM emp
+WHERE sal > AVG(sal);
+```
+
+`WHERE` 执行时还没有进行聚合计算，因此不能直接在这里使用 `AVG(sal)`。
+
+可以先通过子查询计算平均工资：
+
+```sql
+SELECT AVG(sal)
+FROM emp;
+```
+
+假设结果为：
+
+```text
+2073.214286
+```
+
+再将这个结果作为外层查询的过滤条件：
+
+```sql
+SELECT ename, sal
+FROM emp
+WHERE sal > (
+    SELECT AVG(sal)
+    FROM emp
+);
+```
+
+从逻辑上可以理解为：
+
+```text
+1. 子查询：
+   SELECT AVG(sal) FROM emp
+        ↓
+   得到平均工资
+
+2. 外层查询：
+   sal > 平均工资
+        ↓
+   找出工资高于平均工资的员工
+```
+
+这里的子查询最终返回一个值，可以直接参与 `>` 比较。
+
+---
+
+### FROM 中使用子查询
+
+`FROM` 后的子查询可以将查询结果作为一张**派生表（Derived Table）**，再由外层查询继续处理。
+
+例如，查询**每个部门平均工资所对应的工资等级**。
+
+第一步，计算每个部门的平均工资：
+
+```sql
+SELECT deptno,
+       AVG(sal) AS avg_sal
+FROM emp
+GROUP BY deptno;
+```
+
+结果可以理解为一张新的临时结果表：
+
+```text
+deptno    avg_sal
+------    -------
+10        ...
+20        ...
+30        ...
+```
+
+第二步，将这个查询结果作为一张派生表，与 `salgrade` 进行连接：
+
+```sql
+SELECT t.deptno,
+       t.avg_sal,
+       s.grade
+FROM (
+    SELECT deptno,
+           AVG(sal) AS avg_sal
+    FROM emp
+    GROUP BY deptno
+) AS t
+JOIN salgrade s
+ON t.avg_sal BETWEEN s.losal AND s.hisal;
+```
+
+执行过程可以理解为：
+
+```text
+emp
+ ↓
+按照 deptno 分组
+ ↓
+计算每个部门 AVG(sal)
+ ↓
+形成派生表 t
+ ↓
+t.avg_sal 与 salgrade 的工资区间匹配
+ ↓
+得到每个部门平均工资对应的等级
+```
+
+MySQL 中，`FROM` 后面的派生表必须具有表名，因此需要给子查询结果设置别名：
+
+```sql
+) AS t
+```
+
+`AS` 可以省略：
+
+```sql
+) t
+```
+
+但别名 `t` 本身不能省略。
+
+子查询中的计算结果如果还需要在外层继续引用，也应该主动设置清晰的字段别名。例如：
+
+```sql
+AVG(sal) AS avg_sal
+```
+
+外层就可以直接使用：
+
+```sql
+t.avg_sal
+```
+
+如果不设置别名，表达式生成的列名可能不便于外层引用，因此**派生表中的计算字段应尽量显式设置别名**。
+
+> **结论：** `FROM` 后的子查询可以理解为“先查询出一张临时结果表，再把这张结果表当作普通表继续查询”。
+
+---
+
+### SELECT 中使用子查询
+
+子查询也可以作为 `SELECT` 查询结果中的一个字段。
+
+例如，查询员工姓名以及员工所在部门的名称：
+
+```sql
+SELECT e.ename,
+       (
+           SELECT d.dname
+           FROM dept d
+           WHERE d.deptno = e.deptno
+       ) AS dname
+FROM emp e;
+```
+
+这里外层查询先处理 `emp` 中的员工记录，内部子查询根据当前员工的：
+
+```text
+e.deptno
+```
+
+到 `dept` 表中寻找对应的：
+
+```text
+d.dname
+```
+
+因此结果可以得到：
+
+```text
+ename    dname
+-----    ----------
+SMITH    RESEARCH
+ALLEN    SALES
+CLARK    ACCOUNTING
+...
+```
+
+这种写在 `SELECT` 中、需要作为一个字段值使用的子查询通常必须返回**单个值**，也就是一行一列的结果。
+
+例如：
+
+```sql
+SELECT (
+    SELECT dname
+    FROM dept
+    WHERE deptno = 20
+);
+```
+
+如果子查询没有找到记录，标量子查询的结果可以是 `NULL`；如果返回多行，而当前位置只允许一个值，则会报错。
+
+上面的“员工及部门名称”也可以通过连接查询完成：
+
+```sql
+SELECT e.ename, d.dname
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno;
+```
+
+当前阶段重点是掌握 `SELECT` 中可以使用子查询，不需要把所有多表查询都改写成这种形式。
+
+---
+
+### 相关子查询
+
+有些子查询可以独立执行，有些子查询需要使用外层查询当前记录中的值。
+
+例如：
+
+```sql
+SELECT AVG(sal)
+FROM emp;
+```
+
+这条子查询不依赖外层查询，可以单独执行。
+
+而：
+
+```sql
+SELECT *
+FROM t_customer c
+WHERE EXISTS (
+    SELECT 1
+    FROM t_order o
+    WHERE o.customer_id = c.customer_id
+);
+```
+
+内部子查询使用了外层查询中的：
+
+```text
+c.customer_id
+```
+
+这种子查询称为**相关子查询（Correlated Subquery）**。
+
+从逻辑上可以理解为：外层查询处理一条顾客记录时，把当前顾客的 `customer_id` 交给内部子查询，检查该顾客是否存在对应订单。
+
+---
+
+### EXISTS
+
+`EXISTS` 表示“是否存在”，用于判断子查询**是否至少能够返回一行记录**。
+
+基本形式：
+
+```sql
+WHERE EXISTS (
+    子查询
+)
+```
+
+判断规则非常简单：
+
+```text
+子查询至少返回一行
+        ↓
+EXISTS = TRUE
+
+子查询一行都没有返回
+        ↓
+EXISTS = FALSE
+```
+
+例如准备顾客表和订单表：
+
+```sql
+DROP TABLE IF EXISTS t_order;
+DROP TABLE IF EXISTS t_customer;
+
+CREATE TABLE t_customer (
+    customer_id INT,
+    customer_name VARCHAR(32)
+);
+
+CREATE TABLE t_order (
+    order_id INT,
+    order_price DECIMAL(10, 2),
+    customer_id INT
+);
+
+INSERT INTO t_customer VALUES (1, 'zhangsan');
+INSERT INTO t_customer VALUES (2, 'lisi');
+INSERT INTO t_customer VALUES (3, 'wangwu');
+
+INSERT INTO t_order VALUES (10, 1000.00, 1);
+INSERT INTO t_order VALUES (20, 2000.00, 1);
+INSERT INTO t_order VALUES (30, 3000.00, 2);
+INSERT INTO t_order VALUES (40, 4000.00, 2);
+```
+
+数据为：
+
+```sql
+mysql> select * from t_customer;
++-------------+---------------+
+| customer_id | customer_name |
++-------------+---------------+
+|           1 | zhangsan      |
+|           2 | lisi          |
+|           3 | wangwu        |
++-------------+---------------+
+3 rows in set (0.00 sec)
+
+mysql> select * from t_order;
++----------+-------------+-------------+
+| order_id | order_price | customer_id |
++----------+-------------+-------------+
+|       10 |      1000.0 |           1 |
+|       20 |      2000.0 |           1 |
+|       30 |      3000.0 |           2 |
+|       40 |      4000.0 |           2 |
++----------+-------------+-------------+
+4 rows in set (0.00 sec)
+```
+
+查询所有**下过订单的顾客**：
+
+```sql
+SELECT *
+FROM t_customer c
+WHERE EXISTS (
+    SELECT 1
+    FROM t_order o
+    WHERE o.customer_id = c.customer_id
+);
+```
+
+从逻辑上可以逐个顾客理解。
+
+对于 `zhangsan`：
+
+```text
+c.customer_id = 1
+       ↓
+寻找 customer_id = 1 的订单
+       ↓
+能够找到记录
+       ↓
+EXISTS = TRUE
+       ↓
+保留 zhangsan
+```
+
+对于 `wangwu`：
+
+```text
+c.customer_id = 3
+       ↓
+寻找 customer_id = 3 的订单
+       ↓
+没有记录
+       ↓
+EXISTS = FALSE
+       ↓
+过滤 wangwu
+```
+
+最终得到：
+
+```text
+zhangsan
+lisi
+```
+
+`EXISTS` 关心的只是**子查询有没有返回记录**，并不关心返回记录中的具体字段值。因此实际编写时经常使用：
+
+```sql
+EXISTS (
+    SELECT 1
+    FROM ...
+)
+```
+
+这里的 `1` 本身没有特殊业务含义，只是明确表示当前只关心记录是否存在。
+
+---
+
+### NOT EXISTS
+
+`NOT EXISTS` 与 `EXISTS` 的判断结果相反：
+
+```text
+子查询没有返回任何记录
+        ↓
+NOT EXISTS = TRUE
+
+子查询至少返回一行
+        ↓
+NOT EXISTS = FALSE
+```
+
+例如，查询所有**从未下过订单的顾客**：
+
+```sql
+SELECT *
+FROM t_customer c
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM t_order o
+    WHERE o.customer_id = c.customer_id
+);
+```
+
+对于 `wangwu`：
+
+```text
+customer_id = 3
+      ↓
+没有对应订单
+      ↓
+EXISTS = FALSE
+      ↓
+NOT EXISTS = TRUE
+      ↓
+保留 wangwu
+```
+
+最终得到：
+
+```text
+wangwu
+```
+
+因此：
+
+```text
+EXISTS     → 存在满足条件的相关记录
+NOT EXISTS → 不存在满足条件的相关记录
+```
+
+这类写法特别适合表达：
+
+```text
+查询有订单的顾客
+查询没有订单的顾客
+查询有选课记录的学生
+查询没有借阅记录的用户
+```
+
+---
+
+### IN 与 EXISTS
+
+`IN` 和 `EXISTS` 都可以与子查询结合完成条件过滤，但二者表达问题的角度不同。
+
+`IN` 关注的是：**某个值是否属于子查询返回的一组值。**
+
+例如：
+
+```sql
+SELECT *
+FROM t_customer
+WHERE customer_id IN (
+    SELECT customer_id
+    FROM t_order
+);
+```
+
+可以理解为先得到：
+
+```text
+订单表中的 customer_id
+
+1
+1
+2
+2
+```
+
+再判断：
+
+```text
+当前顾客的 customer_id
+是否存在于这些值中
+```
+
+`EXISTS` 关注的是：**针对当前外层记录，是否存在满足条件的相关记录。**
+
+```sql
+SELECT *
+FROM t_customer c
+WHERE EXISTS (
+    SELECT 1
+    FROM t_order o
+    WHERE o.customer_id = c.customer_id
+);
+```
+
+可以概括为：
+
+| 操作符       | 核心含义                     |
+| ------------ | ---------------------------- |
+| `IN`         | 判断一个值是否属于指定集合   |
+| `EXISTS`     | 判断是否存在满足条件的记录   |
+| `NOT IN`     | 判断一个值是否不属于指定集合 |
+| `NOT EXISTS` | 判断是否不存在满足条件的记录 |
+
+例如，查询“手机”和“平板电脑”中，存在金额高于 `1000` 的订单的商品，可以使用 `IN`：
+
+```sql
+SELECT *
+FROM products
+WHERE product_name IN ('手机', '平板电脑')
+  AND product_id IN (
+      SELECT product_id
+      FROM orders
+      WHERE order_amount > 1000
+  );
+```
+
+也可以使用 `EXISTS`：
+
+```sql
+SELECT *
+FROM products p
+WHERE p.product_name IN ('手机', '平板电脑')
+  AND EXISTS (
+      SELECT 1
+      FROM orders o
+      WHERE o.product_id = p.product_id
+        AND o.order_amount > 1000
+  );
+```
+
+两种写法都是在判断商品是否存在符合要求的订单，但表达方式不同：`IN` 是“商品编号是否出现在结果集合中”，`EXISTS` 是“当前商品是否存在一条满足条件的订单”。
+
+#### IN 与 EXISTS 的效率
+
+不能简单记成“`EXISTS` 一定比 `IN` 快”，也不能认为 `IN` 一定会针对每个待匹配值重复进行多次全表扫描。
+
+MySQL 优化器可以根据具体 SQL 将 `IN`、`EXISTS` 等子查询采用不同的优化策略执行，例如半连接、物化等。因此最终性能会受到很多因素影响，包括：
+
+- 表的数据量；
+- 是否存在合适的索引；
+- 数据分布；
+- 子查询返回的数据量；
+- 查询条件；
+- MySQL 优化器最终选择的执行计划。
+
+**选择 `IN` 还是 `EXISTS` 时，首先应该根据业务语义写出清晰、正确的 SQL；真正存在性能问题时，再通过 `EXPLAIN` 等方式分析执行计划，而不是只根据 `IN` 或 `EXISTS` 关键字直接判断快慢。**
+
+#### NOT IN 与 NOT EXISTS
+
+`NOT IN` 与 `NULL` 一起使用时需要特别注意。
+
+例如：
+
+```sql
+WHERE customer_id NOT IN (
+    SELECT customer_id
+    FROM t_order
+)
+```
+
+如果子查询结果中包含 `NULL`，就可能受到 SQL 三值逻辑影响，产生与直觉不同的查询结果。
+
+而表达“**不存在与当前记录匹配的数据**”时，可以使用：
+
+```sql
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM t_order o
+    WHERE o.customer_id = c.customer_id
+)
+```
+
+`NOT EXISTS` 只关注符合关联条件的记录是否存在，不需要将当前值与子查询结果中的 `NULL` 逐个进行普通比较，因此在这类“查询没有关联记录的数据”场景中通常更加直观。
+
+> **易错点：** `IN` 和 `EXISTS` 的区别首先是**语义和写法不同**，而不是简单的性能高低。特别是使用 `NOT IN` 时，还要注意子查询结果中是否可能存在 `NULL`。
+
+## UNION 与 UNION ALL
+
+`UNION` 和 `UNION ALL` 都用于将**多个 `SELECT` 查询得到的结果集合并成一个结果集**。两者的主要区别在于：`UNION` 会对合并后的结果去重，而 `UNION ALL` 会保留所有记录，包括重复记录。
+
+### 基本用法
+
+例如，查询岗位为 `MANAGER` 和 `SALESMAN` 的员工：
+
+```sql
+SELECT ename, job
+FROM emp
+WHERE job = 'MANAGER'
+
+UNION ALL
+
+SELECT ename, job
+FROM emp
+WHERE job = 'SALESMAN';
+```
+
+执行过程可以理解为：
+
+```text
+查询 MANAGER
+      ↓
+得到结果集 1
+
+查询 SALESMAN
+      ↓
+得到结果集 2
+
+      ↓
+UNION ALL
+      ↓
+合并为一个结果集
+```
+
+这种需求也可以使用 `OR` 或 `IN`：
+
+```sql
+SELECT ename, job
+FROM emp
+WHERE job = 'MANAGER'
+   OR job = 'SALESMAN';
+```
+
+或者：
+
+```sql
+SELECT ename, job
+FROM emp
+WHERE job IN ('MANAGER', 'SALESMAN');
+```
+
+对于这种**同一张表、同一个字段匹配多个值**的简单条件，通常优先使用 `IN` 或 `OR`，写法更加直接。不能简单认为 `UNION ALL` 一定比 `OR` 或 `IN` 更快，实际效率取决于索引、数据量以及数据库优化器最终选择的执行计划。
+
+---
+
+### UNION
+
+`UNION` 会将多个查询结果合并，并对最终结果进行**去重**。
+
+例如：
+
+```sql
+SELECT ename
+FROM emp
+
+UNION
+
+SELECT ename
+FROM emp;
+```
+
+两个查询得到的内容完全相同，但 `UNION` 会删除重复记录，因此最终结果与只查询一次基本相同。
+
+可以理解为：
+
+```text
+结果集 1
+   +
+结果集 2
+   ↓
+合并
+   ↓
+去除重复记录
+   ↓
+最终结果
+```
+
+---
+
+### UNION ALL
+
+`UNION ALL` 只负责合并结果，**不会进行去重**。
+
+例如：
+
+```sql
+SELECT ename
+FROM emp
+
+UNION ALL
+
+SELECT ename
+FROM emp;
+```
+
+如果 `emp` 表有 14 条记录，那么两个查询分别返回 14 条，合并以后会得到：
+
+```text
+14 + 14 = 28 条
+```
+
+即使两次查询的数据完全相同，也会全部保留。
+
+因此：
+
+```text
+UNION     → 合并 + 去重
+UNION ALL → 直接合并，不去重
+```
+
+如果业务本身允许出现重复记录，或者能够确定两个结果集之间不会重复，通常优先使用 `UNION ALL`，因为它不需要额外执行去重操作。
+
+> **结论：** 是否使用 `UNION`，关键取决于**是否需要去重**。需要去重使用 `UNION`；不需要去重优先使用 `UNION ALL`。
+
+---
+
+### 合并结果集的要求
+
+使用 `UNION` 或 `UNION ALL` 时，各个 `SELECT` 查询返回的**列数必须一致**。
+
+例如：
+
+```sql
+SELECT ename, sal
+FROM emp
+
+UNION ALL
+
+SELECT ename, job
+FROM emp;
+```
+
+两个查询都返回两列，因此列数符合要求。
+
+而下面的写法存在问题：
+
+```sql
+SELECT ename, sal
+FROM emp
+
+UNION ALL
+
+SELECT ename
+FROM emp;
+```
+
+第一个查询返回两列，第二个查询只返回一列，无法按位置合并。
+
+除了列数一致以外，**对应位置的列还应该具有兼容的数据类型和含义**。结果集是按照列的位置进行对应，而不是按照字段名进行匹配：
+
+```text
+查询 1：第1列  第2列
+          ↓      ↓
+查询 2：第1列  第2列
+```
+
+例如：
+
+```sql
+SELECT ename, sal
+FROM emp
+
+UNION ALL
+
+SELECT dname, deptno
+FROM dept;
+```
+
+这里：
+
+```text
+ename  ↔ dname
+sal    ↔ deptno
+```
+
+分别按照第一列、第二列的位置进行合并。
+
+最终结果的列名通常以**第一个 `SELECT` 的列名或别名**为准。例如：
+
+```sql
+SELECT ename AS name, sal AS value
+FROM emp
+
+UNION ALL
+
+SELECT dname, deptno
+FROM dept;
+```
+
+最终结果的列名使用：
+
+```text
+name
+value
+```
+
+> **易错点：** `UNION` 和 `UNION ALL` 合并的是**查询结果集**，不是直接把两张表连接起来。各查询返回的列数必须一致，对应位置的数据也应具有合理的兼容关系。
+
+---
+
+### UNION、UNION ALL 与连接查询的区别
+
+`UNION`、`UNION ALL` 与前面学习的 `JOIN` 都会涉及多个数据集合，但作用完全不同。
+
+`JOIN` 是将不同表的数据按照某种关系进行**横向拼接**：
+
+```text
+员工姓名 + 部门名称 + 工资等级
+```
+
+例如：
+
+```sql
+SELECT e.ename, d.dname
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno;
+```
+
+结果在原有列的基础上增加了来自另一张表的列。
+
+而 `UNION`、`UNION ALL` 是将结构相同或兼容的查询结果进行**纵向追加**：
+
+```text
+结果集 1
+---------
+A
+B
+
+结果集 2
+---------
+C
+D
+
+合并后
+---------
+A
+B
+C
+D
+```
+
+可以简单理解为：
+
+```text
+JOIN
+→ 横向组合列
+
+UNION / UNION ALL
+→ 纵向追加行
+```
+
+> **结论：** 需要把不同表的字段组合到同一行时使用 `JOIN`；需要把多个查询得到的同类记录追加到一起时使用 `UNION` 或 `UNION ALL`。
+
+## LIMIT
+
+`LIMIT` 用于**限制查询结果返回的记录数量**，可以从查询结果的指定位置开始，取出一定数量的记录。它常用于查询前若干条数据以及实现分页查询。
+
+基本语法：
+
+```sql
+LIMIT 开始下标, 记录条数;
+```
+
+其中：
+
+- **开始下标**：从查询结果的第几条记录开始，下标从 `0` 开始。
+- **记录条数**：从指定位置开始，最多返回多少条记录。
+
+例如：
+
+```sql
+LIMIT 0, 5
+```
+
+表示从下标 `0` 开始，取出最多 5 条记录，也就是查询结果中的前 5 条。
+
+---
+
+### LIMIT 的基本使用
+
+查询员工表中的前 5 条记录：
+
+```sql
+SELECT ename, sal
+FROM emp
+LIMIT 0, 5;
+```
+
+如果开始下标为 `0`，可以省略开始下标，简写为：
+
+```sql
+SELECT ename, sal
+FROM emp
+LIMIT 5;
+```
+
+因此：
+
+```sql
+LIMIT 5
+```
+
+等价于：
+
+```sql
+LIMIT 0, 5
+```
+
+需要注意，`LIMIT` 限制的是**当前查询结果中的记录位置**。如果没有通过 `ORDER BY` 明确指定排序规则，就不能把“前 5 条”理解成具有固定业务意义的“前 5 名”。
+
+---
+
+### LIMIT 与 ORDER BY
+
+如果需要查询按照某种规则排名后的前几条数据，应当先通过 `ORDER BY` 排序，再使用 `LIMIT` 截取结果。
+
+例如，查询工资最高的前 5 名员工：
+
+```sql
+SELECT ename, sal
+FROM emp
+ORDER BY sal DESC
+LIMIT 5;
+```
+
+可以按照下面的逻辑理解：
+
+```text
+emp 中的员工
+    ↓
+ORDER BY sal DESC
+按照工资从高到低排序
+    ↓
+LIMIT 5
+保留前 5 条
+```
+
+因此，`LIMIT` 位于 `ORDER BY` 后面，并在逻辑上对排序后的结果进行截取。
+
+如果要查询工资排名第 2～5 名的员工，可以写成：
+
+```sql
+SELECT ename, sal
+FROM emp
+ORDER BY sal DESC
+LIMIT 1, 4;
+```
+
+这里：
+
+```text
+LIMIT 1, 4
+```
+
+表示：
+
+- 从下标 `1` 开始；
+- 连续取 4 条记录。
+
+由于下标从 `0` 开始：
+
+```text
+排名    下标
+第1名    0
+第2名    1
+第3名    2
+第4名    3
+第5名    4
+```
+
+所以最终得到第 2～5 名。
+
+> **易错点：** `LIMIT` 中的第一个数字是**从 0 开始的下标**，不是“第几条”的自然序号。例如 `LIMIT 1, 4` 是从第 2 条记录开始取 4 条，而不是从第 1 条开始。
+
+---
+
+### 分页查询
+
+当数据库中的数据很多时，不适合一次把所有记录全部展示出来，通常会将数据划分成多页，每次只查询其中一页，这就是**分页查询**。
+
+假设：
+
+```text
+pageNo   = 当前页码
+pageSize = 每页显示的记录数
+```
+
+如果每页显示 3 条记录：
+
+```text
+第1页：LIMIT 0, 3
+第2页：LIMIT 3, 3
+第3页：LIMIT 6, 3
+第4页：LIMIT 9, 3
+```
+
+观察开始下标：
+
+```text
+第1页：(1 - 1) × 3 = 0
+第2页：(2 - 1) × 3 = 3
+第3页：(3 - 1) × 3 = 6
+第4页：(4 - 1) × 3 = 9
+```
+
+因此分页查询的通用公式为：
+
+```text
+开始下标 = (pageNo - 1) × pageSize
+```
+
+对应 SQL：
+
+```sql
+LIMIT (pageNo - 1) * pageSize, pageSize;
+```
+
+例如，每页显示 10 条记录，查询第 3 页：
+
+```text
+开始下标
+= (3 - 1) × 10
+= 20
+```
+
+SQL：
+
+```sql
+SELECT empno, ename, sal
+FROM emp
+ORDER BY empno
+LIMIT 20, 10;
+```
+
+表示跳过前 20 条记录，再查询最多 10 条记录。
+
+实际分页查询通常应该配合稳定的 `ORDER BY` 使用，例如：
+
+```sql
+SELECT empno, ename, sal
+FROM emp
+ORDER BY empno
+LIMIT 20, 10;
+```
+
+这样每一页按照统一的排序规则截取数据，分页结果更加明确。
+
+> **结论：** 分页查询的核心公式是 **`LIMIT (pageNo - 1) * pageSize, pageSize`**，其中 `pageNo` 是页码，`pageSize` 是每页显示的记录数。
+
+---
+
+### LIMIT 在 DQL 中的位置
+
+加入 `LIMIT` 后，目前学习到的单表 DQL 可以写成：
+
+```sql
+SELECT ...
+FROM ...
+WHERE ...
+GROUP BY ...
+HAVING ...
+ORDER BY ...
+LIMIT ...;
+```
+
+对应的逻辑执行顺序可以继续理解为：
+
+```text
+1. FROM
+      ↓
+2. WHERE
+      ↓
+3. GROUP BY
+      ↓
+4. HAVING
+      ↓
+5. SELECT
+      ↓
+6. ORDER BY
+      ↓
+7. LIMIT
+```
+
+因此，`LIMIT` 的作用是对前面已经查询、过滤、分组并排序后的结果进行最终截取。
+
+> **结论：** 当前阶段可以重点记忆单表 DQL 的逻辑执行顺序：**`FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT`**。
+
+## 35 个 DQL 综合练习
+
+本组练习综合使用分组查询、聚合函数、连接查询、子查询、`EXISTS`、`IN`、排序和 `LIMIT` 等知识。对于能够采用多种常见方式解决的问题，分别给出不同解法；对于结构较复杂的问题，先拆分查询步骤，再组合成最终 SQL。
+
+---
+
+### 第 1 题：取得每个部门最高薪水的人员名称
+
+这道题不能只执行：
+
+```sql
+SELECT deptno, MAX(sal)
+FROM emp
+GROUP BY deptno;
+```
+
+因为这样只能得到每个部门的最高工资，还不知道这个工资属于哪名员工。
+
+**思路：先求出每个部门的最高工资，再根据“部门编号 + 工资”找到对应员工。**
+
+#### 解法一：分组子查询 + 连接查询
+
+第一步，取得每个部门的最高工资：
+
+```sql
+SELECT deptno, MAX(sal) AS max_sal
+FROM emp
+GROUP BY deptno;
+```
+
+第二步，将结果作为派生表，与 `emp` 连接：
+
+```sql
+SELECT e.ename, e.deptno, e.sal
+FROM emp e
+JOIN (
+    SELECT deptno, MAX(sal) AS max_sal
+    FROM emp
+    GROUP BY deptno
+) t
+ON e.deptno = t.deptno
+AND e.sal = t.max_sal;
+```
+
+这种写法能够正确处理**同一部门多人并列最高工资**的情况。
+
+#### 解法二：相关子查询
+
+对于每个员工，计算其所在部门的最高工资，再判断当前工资是否等于该最高工资：
+
+```sql
+SELECT e.ename, e.deptno, e.sal
+FROM emp e
+WHERE e.sal = (
+    SELECT MAX(e2.sal)
+    FROM emp e2
+    WHERE e2.deptno = e.deptno
+);
+```
+
+---
+
+### 第 2 题：查询薪水高于所在部门平均薪水的员工
+
+关键不是与“全公司平均工资”比较，而是**每个员工与自己所在部门的平均工资比较**。
+
+#### 解法一：先求部门平均工资，再连接
+
+第一步：
+
+```sql
+SELECT deptno, AVG(sal) AS avg_sal
+FROM emp
+GROUP BY deptno;
+```
+
+第二步：
+
+```sql
+SELECT e.ename,
+       e.sal,
+       e.deptno,
+       t.avg_sal
+FROM emp e
+JOIN (
+    SELECT deptno, AVG(sal) AS avg_sal
+    FROM emp
+    GROUP BY deptno
+) t
+ON e.deptno = t.deptno
+AND e.sal > t.avg_sal;
+```
+
+#### 解法二：相关子查询
+
+```sql
+SELECT e.ename, e.sal, e.deptno
+FROM emp e
+WHERE e.sal > (
+    SELECT AVG(e2.sal)
+    FROM emp e2
+    WHERE e2.deptno = e.deptno
+);
+```
+
+这里内部子查询会根据当前员工的 `deptno`，计算该员工所在部门的平均工资。
+
+---
+
+### 第 3 题：取得每个部门平均薪水的工资等级
+
+**思路：先计算各部门平均工资，再将平均工资与 `salgrade` 中的工资区间匹配。**
+
+第一步：
+
+```sql
+SELECT deptno, AVG(sal) AS avg_sal
+FROM emp
+GROUP BY deptno;
+```
+
+第二步：
+
+```sql
+SELECT t.deptno,
+       t.avg_sal,
+       s.grade
+FROM (
+    SELECT deptno, AVG(sal) AS avg_sal
+    FROM emp
+    GROUP BY deptno
+) t
+JOIN salgrade s
+ON t.avg_sal BETWEEN s.losal AND s.hisal;
+```
+
+这里不能直接按照员工工资去匹配 `salgrade`，因为题目要求的是**部门平均工资对应的等级**。
+
+---
+
+### 第 4 题：取得每个部门中所有员工薪水等级的平均值
+
+这道题与上一题容易混淆：
+
+- 第 3 题：先求**部门平均工资**，再判断这个平均工资属于哪个等级。
+- 第 4 题：先求**每个员工自己的工资等级**，再计算一个部门所有员工等级的平均值。
+
+#### 解法一：连接后直接分组
+
+先通过：
+
+```sql
+e.sal BETWEEN s.losal AND s.hisal
+```
+
+找出每名员工的工资等级，然后按照部门分组：
+
+```sql
+SELECT e.deptno,
+       AVG(s.grade) AS avg_grade
+FROM emp e
+JOIN salgrade s
+ON e.sal BETWEEN s.losal AND s.hisal
+GROUP BY e.deptno;
+```
+
+#### 解法二：先生成员工工资等级结果，再分组
+
+第一步：
+
+```sql
+SELECT e.deptno,
+       e.ename,
+       s.grade
+FROM emp e
+JOIN salgrade s
+ON e.sal BETWEEN s.losal AND s.hisal;
+```
+
+第二步，将其作为派生表：
+
+```sql
+SELECT t.deptno,
+       AVG(t.grade) AS avg_grade
+FROM (
+    SELECT e.deptno,
+           e.ename,
+           s.grade
+    FROM emp e
+    JOIN salgrade s
+    ON e.sal BETWEEN s.losal AND s.hisal
+) t
+GROUP BY t.deptno;
+```
+
+第一种写法更加简洁，第二种写法更容易展示完整思路。
+
+---
+
+### 第 5 题：不使用 MAX()，取得最高薪水
+
+#### 解法一：排序后取第一条
+
+```sql
+SELECT sal
+FROM emp
+ORDER BY sal DESC
+LIMIT 1;
+```
+
+这是最直接的写法。
+
+如果同时需要员工姓名：
+
+```sql
+SELECT ename, sal
+FROM emp
+ORDER BY sal DESC
+LIMIT 1;
+```
+
+但这种写法在多人并列最高工资时**只会返回其中一人**。
+
+#### 解法二：使用 NOT EXISTS
+
+如果某员工的工资已经是最高工资，那么表中就不存在工资比他更高的员工：
+
+```sql
+SELECT e.ename, e.sal
+FROM emp e
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM emp e2
+    WHERE e2.sal > e.sal
+);
+```
+
+这种写法可以返回所有并列最高工资的员工，并且没有使用 `MAX()`。
+
+> **结论：** 只需要取得一个最高工资结果时，`ORDER BY ... DESC LIMIT 1` 最简单；如果需要保留并列最高工资的所有员工，可以使用 `NOT EXISTS`。
+
+---
+
+### 第 6 题：取得平均薪水最高的部门编号
+
+#### 解法一：分组、排序、取第一名
+
+```sql
+SELECT deptno,
+       AVG(sal) AS avg_sal
+FROM emp
+GROUP BY deptno
+ORDER BY avg_sal DESC
+LIMIT 1;
+```
+
+这种方式最简洁，但如果多个部门平均工资并列第一，只会返回一个部门。
+
+#### 解法二：求出最高的部门平均工资
+
+先计算：
+
+```sql
+SELECT deptno, AVG(sal) AS avg_sal
+FROM emp
+GROUP BY deptno;
+```
+
+再从这些平均工资中找最大值：
+
+```sql
+SELECT t.deptno, t.avg_sal
+FROM (
+    SELECT deptno, AVG(sal) AS avg_sal
+    FROM emp
+    GROUP BY deptno
+) t
+WHERE t.avg_sal = (
+    SELECT MAX(t2.avg_sal)
+    FROM (
+        SELECT deptno, AVG(sal) AS avg_sal
+        FROM emp
+        GROUP BY deptno
+    ) t2
+);
+```
+
+虽然第二种写法较长，但可以返回所有并列最高的部门。
+
+---
+
+### 第 7 题：取得平均薪水最高的部门名称
+
+#### 解法一：直接连接部门表后排序
+
+```sql
+SELECT d.deptno,
+       d.dname,
+       AVG(e.sal) AS avg_sal
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno
+GROUP BY d.deptno, d.dname
+ORDER BY avg_sal DESC
+LIMIT 1;
+```
+
+#### 解法二：先求平均工资最高的部门，再查询部门名称
+
+```sql
+SELECT d.dname,
+       t.avg_sal
+FROM dept d
+JOIN (
+    SELECT deptno,
+           AVG(sal) AS avg_sal
+    FROM emp
+    GROUP BY deptno
+    ORDER BY avg_sal DESC
+    LIMIT 1
+) t
+ON d.deptno = t.deptno;
+```
+
+第二种写法将问题明显拆成了：
+
+```text
+求平均工资最高的部门
+        ↓
+根据 deptno 查询部门名称
+```
+
+---
+
+### 第 8 题：求平均薪水等级最低的部门名称
+
+这道题包含三层关系：
+
+```text
+部门
+ ↓
+部门平均工资
+ ↓
+平均工资对应的工资等级
+ ↓
+找最低等级
+```
+
+第一步，查询每个部门的平均工资：
+
+```sql
+SELECT e.deptno,
+       d.dname,
+       AVG(e.sal) AS avg_sal
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno
+GROUP BY e.deptno, d.dname;
+```
+
+第二步，查询这些平均工资对应的等级：
+
+```sql
+SELECT t.*,
+       s.grade
+FROM (
+    SELECT e.deptno,
+           d.dname,
+           AVG(e.sal) AS avg_sal
+    FROM emp e
+    JOIN dept d
+    ON e.deptno = d.deptno
+    GROUP BY e.deptno, d.dname
+) t
+JOIN salgrade s
+ON t.avg_sal BETWEEN s.losal AND s.hisal;
+```
+
+第三步，按照等级升序，取最低等级：
+
+```sql
+SELECT t.dname,
+       t.avg_sal,
+       s.grade
+FROM (
+    SELECT e.deptno,
+           d.dname,
+           AVG(e.sal) AS avg_sal
+    FROM emp e
+    JOIN dept d
+    ON e.deptno = d.deptno
+    GROUP BY e.deptno, d.dname
+) t
+JOIN salgrade s
+ON t.avg_sal BETWEEN s.losal AND s.hisal
+ORDER BY s.grade
+LIMIT 1;
+```
+
+> **注意：** `LIMIT 1` 只能取得一个最低等级部门。如果存在多个部门的平均工资等级并列最低，而题目要求全部列出，就需要进一步通过子查询求最低等级，而不能简单使用 `LIMIT 1`。
+
+---
+
+### 第 9 题：取得比所有普通员工最高薪水还高的领导人姓名
+
+这里将**员工编号没有出现在其他员工 `mgr` 字段中的员工**视为普通员工。
+
+首先找出所有领导编号：
+
+```sql
+SELECT mgr
+FROM emp
+WHERE mgr IS NOT NULL;
+```
+
+因此普通员工可以表示为：
+
+```sql
+SELECT *
+FROM emp
+WHERE empno NOT IN (
+    SELECT mgr
+    FROM emp
+    WHERE mgr IS NOT NULL
+);
+```
+
+> **易错点：** 这里必须排除 `mgr` 中的 `NULL`。如果 `NOT IN` 的集合中包含 `NULL`，会受到 SQL 三值逻辑影响，可能导致查询不到预期数据。
+
+#### 解法一：先求普通员工最高工资
+
+```sql
+SELECT MAX(sal)
+FROM emp
+WHERE empno NOT IN (
+    SELECT mgr
+    FROM emp
+    WHERE mgr IS NOT NULL
+);
+```
+
+再查询工资超过该值的员工：
+
+```sql
+SELECT ename, sal
+FROM emp
+WHERE sal > (
+    SELECT MAX(sal)
+    FROM emp
+    WHERE empno NOT IN (
+        SELECT mgr
+        FROM emp
+        WHERE mgr IS NOT NULL
+    )
+);
+```
+
+#### 解法二：使用 NOT EXISTS 判断普通员工
+
+```sql
+SELECT e.ename, e.sal
+FROM emp e
+WHERE e.sal > (
+    SELECT MAX(x.sal)
+    FROM emp x
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM emp y
+        WHERE y.mgr = x.empno
+    )
+);
+```
+
+这里：
+
+```text
+NOT EXISTS(...)
+```
+
+表示不存在其他员工将 `x.empno` 作为自己的领导编号，因此 `x` 是普通员工。
+
+---
+
+### 第 10 题：取得薪水最高的前 5 名员工
+
+```sql
+SELECT ename, sal
+FROM emp
+ORDER BY sal DESC
+LIMIT 5;
+```
+
+逻辑是先按照工资降序排列，再截取前 5 条：
+
+```text
+ORDER BY sal DESC
+        ↓
+LIMIT 5
+```
+
+> **注意：** 这种方式取得的是排序后的前 5 条记录。如果第 5 名存在工资并列，它不会自动把所有并列员工全部查询出来。
+
+---
+
+### 第 11 题：取得薪水最高的第 6～10 名员工
+
+```sql
+SELECT ename, sal
+FROM emp
+ORDER BY sal DESC
+LIMIT 5, 5;
+```
+
+因为 `LIMIT` 的下标从 `0` 开始：
+
+```text
+第1名 → 下标0
+...
+第6名 → 下标5
+```
+
+所以：
+
+```text
+LIMIT 5, 5
+```
+
+表示从第 6 条开始连续取 5 条，即第 6～10 名。
+
+---
+
+### 第 12 题：取得最后入职的 5 名员工
+
+```sql
+SELECT ename, hiredate
+FROM emp
+ORDER BY hiredate DESC
+LIMIT 5;
+```
+
+这里应根据 `hiredate` 排序，而不是工资。
+
+---
+
+### 第 13 题：取得每个薪水等级有多少员工
+
+第一步，根据工资找到每名员工对应的等级：
+
+```sql
+SELECT e.ename,
+       e.sal,
+       s.grade
+FROM emp e
+JOIN salgrade s
+ON e.sal BETWEEN s.losal AND s.hisal;
+```
+
+第二步，按照工资等级分组统计：
+
+```sql
+SELECT s.grade,
+       COUNT(*) AS employee_count
+FROM emp e
+JOIN salgrade s
+ON e.sal BETWEEN s.losal AND s.hisal
+GROUP BY s.grade;
+```
+
+也可以将第一步作为派生表：
+
+```sql
+SELECT t.grade,
+       COUNT(*) AS employee_count
+FROM (
+    SELECT e.empno,
+           s.grade
+    FROM emp e
+    JOIN salgrade s
+    ON e.sal BETWEEN s.losal AND s.hisal
+) t
+GROUP BY t.grade;
+```
+
+第一种写法更加简洁。
+
+---
+
+### 第 14 题：列出所有员工及其直属领导姓名
+
+因为题目要求**所有员工**，即使员工没有直属领导也应该保留，因此应使用外连接：
+
+```sql
+SELECT e.ename AS 员工名,
+       l.ename AS 领导名
+FROM emp e
+LEFT JOIN emp l
+ON e.mgr = l.empno;
+```
+
+`KING` 没有直属领导，因此查询结果类似：
+
+```text
+KING    NULL
+```
+
+如果使用普通内连接：
+
+```sql
+JOIN emp l
+```
+
+则 `KING` 会被过滤掉。
+
+---
+
+### 第 15 题：列出受雇日期早于直属领导的员工编号、姓名和部门名称
+
+需要将 `emp` 分别看作员工表和领导表。
+
+连接关系：
+
+```text
+员工.mgr = 领导.empno
+```
+
+过滤条件：
+
+```text
+员工.hiredate < 领导.hiredate
+```
+
+SQL：
+
+```sql
+SELECT e.empno,
+       e.ename,
+       d.dname
+FROM emp e
+JOIN emp l
+ON e.mgr = l.empno
+JOIN dept d
+ON e.deptno = d.deptno
+WHERE e.hiredate < l.hiredate;
+```
+
+为了观察结果，也可以临时把双方日期一起查出来：
+
+```sql
+SELECT e.ename AS 员工名,
+       e.hiredate AS 员工入职日期,
+       l.ename AS 领导名,
+       l.hiredate AS 领导入职日期,
+       d.dname
+FROM emp e
+JOIN emp l
+ON e.mgr = l.empno
+JOIN dept d
+ON e.deptno = d.deptno
+WHERE e.hiredate < l.hiredate;
+```
+
+---
+
+### 第 16 题：列出部门名称和员工信息，同时保留没有员工的部门
+
+题目的关键是：**没有员工的部门也必须出现。**
+
+因此 `dept` 应作为左连接中必须保留的一侧：
+
+```sql
+SELECT d.deptno,
+       d.dname,
+       e.empno,
+       e.ename,
+       e.sal
+FROM dept d
+LEFT JOIN emp e
+ON d.deptno = e.deptno;
+```
+
+如果某部门没有员工，其员工相关字段显示为 `NULL`。
+
+---
+
+### 第 17 题：列出至少有 5 个员工的部门
+
+#### 解法一：直接按照部门编号分组
+
+```sql
+SELECT deptno,
+       COUNT(*) AS employee_count
+FROM emp
+GROUP BY deptno
+HAVING COUNT(*) >= 5;
+```
+
+#### 解法二：同时查询部门名称
+
+```sql
+SELECT d.deptno,
+       d.dname,
+       COUNT(e.empno) AS employee_count
+FROM dept d
+JOIN emp e
+ON d.deptno = e.deptno
+GROUP BY d.deptno, d.dname
+HAVING COUNT(e.empno) >= 5;
+```
+
+这里的条件依赖 `COUNT()` 的统计结果，因此必须使用 `HAVING`，不能写在 `WHERE` 中。
+
+---
+
+### 第 18 题：列出薪水比 SMITH 高的所有员工
+
+#### 解法一：标量子查询
+
+先查询 `SMITH` 的工资：
+
+```sql
+SELECT sal
+FROM emp
+WHERE ename = 'SMITH';
+```
+
+再作为外层条件：
+
+```sql
+SELECT ename, sal
+FROM emp
+WHERE sal > (
+    SELECT sal
+    FROM emp
+    WHERE ename = 'SMITH'
+);
+```
+
+#### 解法二：自连接
+
+```sql
+SELECT e.ename, e.sal
+FROM emp e
+JOIN emp s
+ON s.ename = 'SMITH'
+WHERE e.sal > s.sal;
+```
+
+第一种写法更符合“先查 SMITH 工资，再进行比较”的自然思路。
+
+---
+
+### 第 19 题：列出所有 CLERK 的姓名、部门名称以及该部门总人数
+
+这道题中有两个不同层次的数据：
+
+```text
+员工级别：
+CLERK 的姓名、部门
+
+部门级别：
+这个部门共有多少员工
+```
+
+因此需要将员工明细和部门统计结合起来。
+
+#### 解法一：部门人数子查询 + 连接
+
+先统计各部门人数：
+
+```sql
+SELECT deptno,
+       COUNT(*) AS total
+FROM emp
+GROUP BY deptno;
+```
+
+再查询 `CLERK` 并连接部门人数：
+
+```sql
+SELECT e.ename,
+       d.dname,
+       t.total
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno
+JOIN (
+    SELECT deptno,
+           COUNT(*) AS total
+    FROM emp
+    GROUP BY deptno
+) t
+ON e.deptno = t.deptno
+WHERE e.job = 'CLERK';
+```
+
+#### 解法二：相关子查询统计部门人数
+
+```sql
+SELECT e.ename,
+       d.dname,
+       (
+           SELECT COUNT(*)
+           FROM emp e2
+           WHERE e2.deptno = e.deptno
+       ) AS department_count
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno
+WHERE e.job = 'CLERK';
+```
+
+---
+
+### 第 20 题：列出最低薪金大于 1500 的工作岗位以及对应员工人数
+
+题目要求先按照岗位分组，然后判断每组最低工资：
+
+```sql
+SELECT job,
+       MIN(sal) AS min_sal,
+       COUNT(*) AS employee_count
+FROM emp
+GROUP BY job
+HAVING MIN(sal) > 1500;
+```
+
+这里不能写：
+
+```sql
+WHERE MIN(sal) > 1500
+```
+
+因为 `MIN(sal)` 是分组后才得到的聚合结果。
+
+---
+
+### 第 21 题：列出 SALES 部门的员工姓名，但不知道 SALES 的部门编号
+
+#### 解法一：连接查询
+
+```sql
+SELECT e.ename
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno
+WHERE d.dname = 'SALES';
+```
+
+#### 解法二：子查询
+
+先查 SALES 的部门编号：
+
+```sql
+SELECT deptno
+FROM dept
+WHERE dname = 'SALES';
+```
+
+再查询员工：
+
+```sql
+SELECT ename
+FROM emp
+WHERE deptno = (
+    SELECT deptno
+    FROM dept
+    WHERE dname = 'SALES'
+);
+```
+
+如果实际业务中可能存在多个同名部门，则更稳妥地使用：
+
+```sql
+SELECT ename
+FROM emp
+WHERE deptno IN (
+    SELECT deptno
+    FROM dept
+    WHERE dname = 'SALES'
+);
+```
+
+---
+
+### 第 22 题：列出薪金高于公司平均薪金的员工、部门、直属领导和工资等级
+
+这道题同时使用：
+
+- 子查询：求全公司平均工资；
+- 自连接：查询直属领导；
+- 普通连接：查询部门；
+- 非等值连接：查询工资等级。
+
+最终 SQL：
+
+```sql
+SELECT e.ename AS 员工名,
+       e.sal,
+       d.dname AS 部门名,
+       l.ename AS 领导名,
+       s.grade AS 工资等级
+FROM emp e
+LEFT JOIN emp l
+ON e.mgr = l.empno
+JOIN dept d
+ON e.deptno = d.deptno
+JOIN salgrade s
+ON e.sal BETWEEN s.losal AND s.hisal
+WHERE e.sal > (
+    SELECT AVG(sal)
+    FROM emp
+);
+```
+
+这里员工与领导之间使用 `LEFT JOIN`，因为工资高于平均工资的员工可能没有直属领导。如果使用内连接，这类员工就会被过滤。
+
+---
+
+### 第 23 题：列出与 SCOTT 从事相同工作的所有员工及部门名称
+
+#### 解法一：子查询
+
+先查询 `SCOTT` 的岗位：
+
+```sql
+SELECT job
+FROM emp
+WHERE ename = 'SCOTT';
+```
+
+然后：
+
+```sql
+SELECT e.ename,
+       e.job,
+       d.dname
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno
+WHERE e.job = (
+    SELECT job
+    FROM emp
+    WHERE ename = 'SCOTT'
+);
+```
+
+题目只说“与 SCOTT 从事相同工作”，没有明确要求排除 `SCOTT` 本人，因此上述结果可以包含 `SCOTT`。
+
+如果要求“除 SCOTT 外的其他员工”，增加：
+
+```sql
+AND e.ename <> 'SCOTT'
+```
+
+即可。
+
+#### 解法二：自连接
+
+```sql
+SELECT e.ename,
+       e.job,
+       d.dname
+FROM emp e
+JOIN emp s
+ON e.job = s.job
+JOIN dept d
+ON e.deptno = d.deptno
+WHERE s.ename = 'SCOTT';
+```
+
+---
+
+### 第 24 题：列出薪金等于 30 部门某个员工薪金的其他员工姓名和薪金
+
+题意是：
+
+```text
+当前员工不在 30 部门
+并且
+当前工资等于 30 部门至少一名员工的工资
+```
+
+#### 解法一：IN 子查询
+
+```sql
+SELECT ename,
+       sal,
+       deptno
+FROM emp
+WHERE deptno <> 30
+  AND sal IN (
+      SELECT sal
+      FROM emp
+      WHERE deptno = 30
+  );
+```
+
+这里不需要特意写 `DISTINCT`，因为 `IN` 判断的是是否存在匹配值，重复工资不会改变判断结果。
+
+#### 解法二：EXISTS
+
+```sql
+SELECT e.ename,
+       e.sal,
+       e.deptno
+FROM emp e
+WHERE e.deptno <> 30
+  AND EXISTS (
+      SELECT 1
+      FROM emp e30
+      WHERE e30.deptno = 30
+        AND e30.sal = e.sal
+  );
+```
+
+---
+
+### 第 25 题：列出薪金高于 30 部门所有员工的员工姓名、薪金和部门名称
+
+“高于 30 部门所有员工”意味着：
+
+```text
+当前工资 > 30 部门最高工资
+```
+
+#### 解法一：使用 MAX()
+
+```sql
+SELECT e.ename,
+       e.sal,
+       d.dname
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno
+WHERE e.sal > (
+    SELECT MAX(sal)
+    FROM emp
+    WHERE deptno = 30
+);
+```
+
+#### 解法二：使用 NOT EXISTS
+
+如果某员工工资高于 30 部门所有员工，那么 30 部门中就**不存在工资大于或等于他的员工**：
+
+```sql
+SELECT e.ename,
+       e.sal,
+       d.dname
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM emp e30
+    WHERE e30.deptno = 30
+      AND e30.sal >= e.sal
+);
+```
+
+第一种写法更加直观。
+
+---
+
+### 第 26 题：列出每个部门的员工数量、平均工资和平均服务期限
+
+如果将服务期限按“天数”计算：
+
+```sql
+SELECT deptno,
+       COUNT(*) AS employee_count,
+       AVG(sal) AS avg_sal,
+       AVG(DATEDIFF(CURRENT_DATE, hiredate)) AS avg_service_days
+FROM emp
+GROUP BY deptno;
+```
+
+如果希望粗略换算成年：
+
+```sql
+SELECT deptno,
+       COUNT(*) AS employee_count,
+       AVG(sal) AS avg_sal,
+       AVG(DATEDIFF(CURRENT_DATE, hiredate) / 365) AS avg_service_years
+FROM emp
+GROUP BY deptno;
+```
+
+`DATEDIFF()` 得到的是两个日期相差的天数，因此直接除以 `365` 只能作为近似的年数。
+
+---
+
+### 第 27 题：列出所有员工的姓名、部门名称和工资
+
+如果当前数据中每名员工都一定对应一个有效部门，可以使用内连接：
+
+```sql
+SELECT e.ename,
+       d.dname,
+       e.sal
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno;
+```
+
+如果严格按照“所有员工”理解，即使某员工没有匹配部门也需要保留，则使用左连接更加稳妥：
+
+```sql
+SELECT e.ename,
+       d.dname,
+       e.sal
+FROM emp e
+LEFT JOIN dept d
+ON e.deptno = d.deptno;
+```
+
+---
+
+### 第 28 题：列出所有部门的详细信息和员工人数
+
+题目要求保留**所有部门，包括没有员工的部门**，因此应该以 `dept` 为主表进行左连接：
+
+```sql
+SELECT d.deptno,
+       d.dname,
+       d.loc,
+       COUNT(e.empno) AS employee_count
+FROM dept d
+LEFT JOIN emp e
+ON d.deptno = e.deptno
+GROUP BY d.deptno, d.dname, d.loc;
+```
+
+这里应该使用：
+
+```sql
+COUNT(e.empno)
+```
+
+而不是：
+
+```sql
+COUNT(*)
+```
+
+因为外连接会为没有员工的部门生成一条右侧字段全部为 `NULL` 的结果。如果使用 `COUNT(*)`，这个空部门也会被错误统计为 `1`；而 `COUNT(e.empno)` 会忽略 `NULL`，正确得到 `0`。
+
+#### 解法二：相关子查询
+
+```sql
+SELECT d.deptno,
+       d.dname,
+       d.loc,
+       (
+           SELECT COUNT(*)
+           FROM emp e
+           WHERE e.deptno = d.deptno
+       ) AS employee_count
+FROM dept d;
+```
+
+---
+
+### 第 29 题：列出各种工作的最低工资以及取得该工资的员工姓名
+
+#### 解法一：分组子查询 + 连接
+
+第一步：
+
+```sql
+SELECT job,
+       MIN(sal) AS min_sal
+FROM emp
+GROUP BY job;
+```
+
+第二步：
+
+```sql
+SELECT e.job,
+       e.ename,
+       e.sal
+FROM emp e
+JOIN (
+    SELECT job,
+           MIN(sal) AS min_sal
+    FROM emp
+    GROUP BY job
+) t
+ON e.job = t.job
+AND e.sal = t.min_sal;
+```
+
+如果某个岗位多人并列最低工资，会全部返回。
+
+#### 解法二：相关子查询
+
+```sql
+SELECT e.job,
+       e.ename,
+       e.sal
+FROM emp e
+WHERE e.sal = (
+    SELECT MIN(e2.sal)
+    FROM emp e2
+    WHERE e2.job = e.job
+);
+```
+
+---
+
+### 第 30 题：列出各部门 MANAGER 的最低薪金
+
+先使用 `WHERE` 只保留岗位为 `MANAGER` 的员工，再按照部门分组：
+
+```sql
+SELECT deptno,
+       MIN(sal) AS min_manager_sal
+FROM emp
+WHERE job = 'MANAGER'
+GROUP BY deptno;
+```
+
+如果还需要部门名称：
+
+```sql
+SELECT d.deptno,
+       d.dname,
+       MIN(e.sal) AS min_manager_sal
+FROM emp e
+JOIN dept d
+ON e.deptno = d.deptno
+WHERE e.job = 'MANAGER'
+GROUP BY d.deptno, d.dname;
+```
+
+这里应该先使用 `WHERE job = 'MANAGER'` 过滤，因为岗位条件属于原始记录条件，不需要等分组以后再判断。
+
+---
+
+### 第 31 题：列出所有员工的年工资，并按照年薪从低到高排序
+
+如果年工资定义为：
+
+```text
+(月薪 + 津贴) × 12
+```
+
+由于 `comm` 可能为 `NULL`，需要通过 `IFNULL()` 将其按 `0` 处理：
+
+```sql
+SELECT ename,
+       (sal + IFNULL(comm, 0)) * 12 AS annual_salary
+FROM emp
+ORDER BY annual_salary ASC;
+```
+
+`ASC` 可以省略：
+
+```sql
+SELECT ename,
+       (sal + IFNULL(comm, 0)) * 12 AS annual_salary
+FROM emp
+ORDER BY annual_salary;
+```
+
+---
+
+### 第 32 题：查询直属领导薪水超过 3000 的员工名称和领导名称
+
+将 `emp` 分别作为员工和领导进行自连接：
+
+```sql
+SELECT e.ename AS 员工名,
+       l.ename AS 领导名
+FROM emp e
+JOIN emp l
+ON e.mgr = l.empno
+WHERE l.sal > 3000;
+```
+
+这里判断的是：
+
+```text
+l.sal > 3000
+```
+
+也就是**领导的工资**，不能错误地写成 `e.sal > 3000`。
+
+---
+
+### 第 33 题：求部门名称中包含 S 的部门工资合计和员工人数
+
+第一步，部门名称包含 `S`：
+
+```sql
+d.dname LIKE '%S%'
+```
+
+第二步，为了保留名称符合要求但没有员工的部门，应使用左连接：
+
+```sql
+SELECT d.dname,
+       IFNULL(SUM(e.sal), 0) AS total_sal,
+       COUNT(e.empno) AS employee_count
+FROM dept d
+LEFT JOIN emp e
+ON d.deptno = e.deptno
+WHERE d.dname LIKE '%S%'
+GROUP BY d.deptno, d.dname;
+```
+
+这里：
+
+```sql
+IFNULL(SUM(e.sal), 0)
+```
+
+保证没有员工的部门工资总额显示为 `0`；
+
+```sql
+COUNT(e.empno)
+```
+
+保证没有员工时人数为 `0`。
+
+---
+
+### 第 34 题：给任职超过 30 年的员工加薪 10%
+
+这道题使用的是 `UPDATE`，因此严格来说已经属于 **DML**，不是 DQL。
+
+#### 解法一：使用 DATE_SUB()
+
+任职超过 30 年意味着入职日期早于“当前日期向前推 30 年”的日期：
+
+```sql
+UPDATE emp
+SET sal = sal * 1.1
+WHERE hiredate < DATE_SUB(CURRENT_DATE, INTERVAL 30 YEAR);
+```
+
+这种写法直接按照日期判断，含义比较明确。
+
+#### 解法二：使用 DATEDIFF() 近似计算
+
+```sql
+UPDATE emp
+SET sal = sal * 1.1
+WHERE DATEDIFF(CURRENT_DATE, hiredate) / 365 > 30;
+```
+
+由于不同年份存在闰年，直接除以 `365` 属于近似计算，因此第一种日期比较方式更加合适。
+
+> **注意：** `UPDATE` 会真正修改数据库中的数据。实际执行此类练习前，应确认测试环境和数据是否允许修改。
+
+---
+
+### 第 35 题：学生、课程与选课综合题
+
+现有三张表：
+
+```text
+S
+----------------
+SNO     学号
+SNAME   姓名
+
+C
+----------------
+CNO       课程号
+CNAME     课程名
+CTEACHER  教师
+
+SC
+----------------
+SNO       学号
+CNO       课程号
+SCGRADE   成绩
+```
+
+其中：
+
+```text
+S 与 SC 通过 SNO 关联
+C 与 SC 通过 CNO 关联
+```
+
+#### 第 35-1 题：找出没选过“黎明”老师课程的所有学生姓名
+
+这道题的关键词是**“没选过”**，也就是对于一个学生来说，不存在一条选课记录对应黎明老师的课程。
+
+##### 解法一：NOT EXISTS
+
+```sql
+SELECT s.sname
+FROM s
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM sc
+    JOIN c
+    ON sc.cno = c.cno
+    WHERE sc.sno = s.sno
+      AND c.cteacher = '黎明'
+);
+```
+
+逻辑为：
+
+```text
+对每个学生
+   ↓
+查询是否存在其选修的“黎明”老师课程
+   ↓
+不存在
+   ↓
+保留该学生
+```
+
+这种写法能够直接表达“没有选过某类课程”的业务含义。
+
+##### 解法二：NOT IN
+
+先查询黎明老师教授的课程编号：
+
+```sql
+SELECT cno
+FROM c
+WHERE cteacher = '黎明';
+```
+
+再查询选过这些课程的学生：
+
+```sql
+SELECT sno
+FROM sc
+WHERE cno IN (
+    SELECT cno
+    FROM c
+    WHERE cteacher = '黎明'
+);
+```
+
+最后排除这些学生：
+
+```sql
+SELECT sname
+FROM s
+WHERE sno NOT IN (
+    SELECT sno
+    FROM sc
+    WHERE cno IN (
+        SELECT cno
+        FROM c
+        WHERE cteacher = '黎明'
+    )
+);
+```
+
+> **注意：** 使用 `NOT IN` 时需要特别注意子查询结果中的 `NULL`。如果相关字段可能出现 `NULL`，`NOT EXISTS` 通常更容易准确表达“没有关联记录”的需求。
+
+---
+
+#### 第 35-2 题：列出至少有 2 门不及格课程的学生姓名及平均成绩
+
+这道题容易出错的地方在于：
+
+```text
+至少 2 门不及格
+```
+
+只用于判断学生是否符合条件，而：
+
+```text
+平均成绩
+```
+
+通常是计算该学生**所有已选课程的平均成绩**，不能只计算不及格课程的平均成绩。
+
+##### 解法一：分别统计不及格数量和平均成绩
+
+第一步，找出至少有两门不及格课程的学生：
+
+```sql
+SELECT s.sno,
+       s.sname,
+       COUNT(*) AS fail_count
+FROM s
+JOIN sc
+ON s.sno = sc.sno
+WHERE sc.scgrade < 60
+GROUP BY s.sno, s.sname
+HAVING COUNT(*) >= 2;
+```
+
+第二步，计算每名学生所有课程的平均成绩：
+
+```sql
+SELECT sno,
+       AVG(scgrade) AS avg_score
+FROM sc
+GROUP BY sno;
+```
+
+第三步，连接两个结果：
+
+```sql
+SELECT a.sname,
+       a.fail_count,
+       b.avg_score
+FROM (
+    SELECT s.sno,
+           s.sname,
+           COUNT(*) AS fail_count
+    FROM s
+    JOIN sc
+    ON s.sno = sc.sno
+    WHERE sc.scgrade < 60
+    GROUP BY s.sno, s.sname
+    HAVING COUNT(*) >= 2
+) a
+JOIN (
+    SELECT sno,
+           AVG(scgrade) AS avg_score
+    FROM sc
+    GROUP BY sno
+) b
+ON a.sno = b.sno;
+```
+
+##### 解法二：条件聚合
+
+也可以一次分组完成：
+
+```sql
+SELECT s.sno,
+       s.sname,
+       AVG(sc.scgrade) AS avg_score
+FROM s
+JOIN sc
+ON s.sno = sc.sno
+GROUP BY s.sno, s.sname
+HAVING SUM(
+    CASE
+        WHEN sc.scgrade < 60 THEN 1
+        ELSE 0
+    END
+) >= 2;
+```
+
+这里：
+
+```sql
+AVG(sc.scgrade)
+```
+
+对学生的所有成绩计算平均值，而：
+
+```sql
+SUM(
+    CASE
+        WHEN sc.scgrade < 60 THEN 1
+        ELSE 0
+    END
+)
+```
+
+只负责统计不及格课程数量。
+
+> **补充：** 测试表将 `SCGRADE` 定义成了 `VARCHAR`，但成绩本质上属于数值数据。实际设计数据库时，更适合将成绩字段设计为数值类型。
+
+---
+
+#### 第 35-3 题：查询既学过 1 号课程又学过 2 号课程的所有学生姓名
+
+题目要求的是：
+
+```text
+课程1学过
+AND
+课程2也学过
+```
+
+不能直接写：
+
+```sql
+WHERE cno = '1'
+  AND cno = '2'
+```
+
+因为同一条选课记录中的 `cno` 不可能同时等于两个不同的值。
+
+##### 解法一：IN 子查询
+
+先找出选过 2 号课程的学生：
+
+```sql
+SELECT sno
+FROM sc
+WHERE cno = '2';
+```
+
+再从选过 1 号课程的人中筛选：
+
+```sql
+SELECT DISTINCT s.sname
+FROM s
+JOIN sc
+ON s.sno = sc.sno
+WHERE sc.cno = '1'
+  AND sc.sno IN (
+      SELECT sno
+      FROM sc
+      WHERE cno = '2'
+  );
+```
+
+##### 解法二：分组 + HAVING
+
+先只保留 1 号和 2 号课程：
+
+```sql
+WHERE sc.cno IN ('1', '2')
+```
+
+再按照学生分组。如果一个学生两门课程都学过，那么不同课程编号数量应该等于 `2`：
+
+```sql
+SELECT s.sno,
+       s.sname
+FROM s
+JOIN sc
+ON s.sno = sc.sno
+WHERE sc.cno IN ('1', '2')
+GROUP BY s.sno, s.sname
+HAVING COUNT(DISTINCT sc.cno) = 2;
+```
+
+这种写法很适合解决：
+
+```text
+同时选过若干门指定课程
+```
+
+这类问题。
+
+##### 解法三：SC 表自连接
+
+将 `SC` 看成两张逻辑表，一张表示 1 号课程，一张表示 2 号课程：
+
+```sql
+SELECT DISTINCT s.sname
+FROM s
+JOIN sc sc1
+ON s.sno = sc1.sno
+JOIN sc sc2
+ON s.sno = sc2.sno
+WHERE sc1.cno = '1'
+  AND sc2.cno = '2';
+```
+
+连接关系可以理解为：
+
+```text
+同一个学生
+   │
+   ├── sc1：选过课程1
+   │
+   └── sc2：选过课程2
+```
+
+> **结论：** 对于“同时满足多个不同记录条件”的问题，常见思路包括**子查询、分组后使用 `HAVING`、自连接**。其中“指定若干值必须全部出现”的场景，`GROUP BY + COUNT(DISTINCT ...)` 是非常值得掌握的一种思路。

@@ -1,0 +1,5214 @@
+---
+id: java-22
+order: 22
+date: 2026-08-22
+updated: 2026-08-22
+tags: ["MySQL"]
+legacyUrls:
+  - "/java/笔记/2026-08-22-22-MySQL-第-III-部分.html"
+---
+
+## MySQL 的使用
+
+### 表的基本操作
+
+数据库表用于按照固定结构存储数据。创建表时先定义表名以及各字段的名称、数据类型等结构信息，之后可以向表中插入数据；当表不再需要时，可以将整张表删除。
+
+#### 创建表
+
+使用 `CREATE TABLE` 语句可以创建表，基本语法如下：
+
+```sql
+CREATE TABLE 表名 (
+    字段名1 数据类型,
+    字段名2 数据类型,
+    字段名3 数据类型
+);
+```
+
+例如，创建学生表：
+
+```sql
+CREATE TABLE t_student (
+    no INT,
+    name VARCHAR(32),
+    gender CHAR(1) DEFAULT '男'
+);
+```
+
+其中：
+
+- `t_student` 是表名。项目开发中可以约定表名以 `t_` 开头，例如 `t_user`、`t_student`，但这只是**命名规范，不是 MySQL 的语法要求**。
+- `no`、`name`、`gender` 是字段名。
+- `INT`、`VARCHAR(32)`、`CHAR(1)` 是字段的数据类型。
+- `DEFAULT '男'` 表示 `gender` 字段的默认值为 `'男'`。插入数据时如果没有为该字段指定值，就可以使用默认值。
+
+还可以使用 `COMMENT` 为字段添加注释，使表结构的含义更加清楚：
+
+```sql
+CREATE TABLE t_user (
+    id INT,
+    username VARCHAR(32) COMMENT '用户姓名',
+    password VARCHAR(32) COMMENT '密码',
+    email VARCHAR(255) COMMENT '邮箱地址',
+    gender CHAR(1) DEFAULT '男' COMMENT '性别'
+);
+```
+
+创建表除了直接编写 SQL，也可以通过 Navicat 等数据库管理工具提供的“新建表”功能完成。本质上，这类图形化操作最终仍然会转换成相应的建表 SQL。
+
+使用下面的命令可以查看某张表完整的建表语句：
+
+```sql
+SHOW CREATE TABLE t_user;
+```
+
+这条命令不仅可以看到字段定义，还可以查看存储引擎、字符集等实际建表信息。
+
+##### 标识符的命名
+
+表名和字段名都属于 SQL 中的**标识符**。正常情况下，应尽量使用简单、具有明确含义且不与 SQL 关键字冲突的名称。
+
+例如，下面的表名包含空格，直接使用会导致 SQL 无法按照预期解析：
+
+```sql
+CREATE TABLE my tab (
+    id INT
+);
+```
+
+如果确实需要使用包含空格、关键字等特殊名称，可以使用 MySQL 的**反引号** `` ` `` 将标识符包裹起来：
+
+```sql
+CREATE TABLE `my tab` (
+    id INT
+);
+```
+
+字段名同样如此。例如 `DESC` 在 SQL 中具有特殊含义，如果需要将其作为字段名，可以写成：
+
+```sql
+CREATE TABLE t_test (
+    id INT,
+    `desc` VARCHAR(255)
+);
+```
+
+> 易错点：MySQL 标识符使用的是**反引号** `` ` ``，字符串值通常使用**单引号** `' '`。虽然可以通过反引号解决关键字或特殊字符冲突，但实际开发中应优先选择规范的表名和字段名，减少这类写法。
+
+#### 插入数据
+
+使用 `INSERT INTO` 语句可以向表中插入数据，基本语法如下：
+
+```sql
+INSERT INTO 表名 (字段名1, 字段名2, 字段名3)
+VALUES (值1, 值2, 值3);
+```
+
+例如：
+
+```sql
+INSERT INTO t_user
+(id, username, password, email, gender)
+VALUES
+(1, 'jack', '123abc', 'jack@123.com', '男');
+```
+
+指定字段插入数据时，**字段和值必须按照位置一一对应，并且数量必须一致，值还应符合对应字段的数据类型要求**。
+
+例如：
+
+```sql
+INSERT INTO t_user
+(id, username, password, email)
+VALUES
+(1, 'jack', '123abc', 'jack@123.com', '男');
+```
+
+这里指定了 4 个字段，却提供了 5 个值，因此会因为字段数量和值数量不匹配而报错。
+
+插入数据时也可以只指定部分字段：
+
+```sql
+INSERT INTO t_user (id)
+VALUES (3);
+```
+
+此时只显式为 `id` 赋值。其他字段如何取值取决于字段本身的定义，例如可能使用默认值、保存为 `NULL`，或者由于字段约束而导致插入失败。
+
+如果要为表中的**全部字段**依次提供值，可以省略字段列表：
+
+```sql
+INSERT INTO t_user
+VALUES
+(2, 'lucy', '123abcdef', 'lucy@123.com', '女');
+```
+
+省略字段列表后，MySQL 会按照**建表时字段定义的顺序**依次匹配每一个值，因此值的数量和顺序都必须与表中的全部字段保持一致。
+
+例如：
+
+```sql
+INSERT INTO t_user
+VALUES
+(2, 'lucy', '123abcdef', 'lucy@123.com');
+```
+
+如果 `t_user` 一共有 5 个字段，而这里只提供了 4 个值，就会因为列数量和值数量不一致而报错。
+
+> 注意：虽然插入全部字段时可以省略字段列表，但实际开发中通常更推荐显式写出字段名。这样字段和值的对应关系更加清楚，而且当表结构发生变化时，SQL 的可维护性也更好。
+
+插入完成后，可以使用查询语句查看表中的数据：
+
+```sql
+SELECT * FROM t_user;
+```
+
+#### 删除表
+
+使用 `DROP TABLE` 可以直接删除一张表：
+
+```sql
+DROP TABLE t_user;
+```
+
+`DROP TABLE` 删除的是**整张表，包括表结构以及表中的全部数据**。如果指定的表不存在，则语句会报错。
+
+为了避免因表不存在而产生错误，可以加入 `IF EXISTS`：
+
+```sql
+DROP TABLE IF EXISTS t_user;
+```
+
+其执行逻辑是：
+
+1. 判断指定的表是否存在。
+2. 如果存在，则删除该表。
+3. 如果不存在，则不执行删除操作，也不会因为“表不存在”而导致语句失败。
+
+因此，在测试、重新建表等场景中，经常会使用：
+
+```sql
+DROP TABLE IF EXISTS t_test;
+
+CREATE TABLE t_test (
+    id INT
+);
+```
+
+> 注意：`DROP TABLE` 属于表结构操作，会直接删除表及其中的数据，与删除某几条数据不是同一概念。执行前需要确认该表是否仍然需要保留。
+
+`CREATE TABLE` 和 `DROP TABLE` 都属于 **DDL（Data Definition Language，数据定义语言）**，用于定义或管理数据库对象的结构；`INSERT` 属于 **DML（Data Manipulation Language，数据操作语言）**，用于操作表中的数据。后续学习的表结构增加、删除和修改等操作，也属于 DDL，将继续在本部分中整理。
+
+---
+
+## MySQL 数据类型
+
+**数据类型（Data Type）用于规定一个字段能够保存什么类型的数据，以及这些数据采用怎样的存储和处理方式。** 创建表时，每个字段都应根据实际业务含义选择合适的数据类型。
+
+例如：
+
+```sql
+CREATE TABLE t_student (
+    id INT,
+    name VARCHAR(32),
+    birthday DATE
+);
+```
+
+其中 `id` 用于保存整数，因此使用 `INT`；`name` 用于保存长度不固定的文本，因此使用 `VARCHAR`；`birthday` 用于保存日期，因此使用 `DATE`。
+
+合理选择数据类型不仅关系到数据能否正确保存，也会影响存储空间、计算精度以及后续查询和处理。尤其是在表中已经存在大量数据以后，再修改字段的数据类型可能需要进行数据转换，甚至可能造成数据截断或丢失，因此应在设计表结构时尽量选择合适的数据类型。
+
+MySQL 常用数据类型主要包括**整数类型、浮点数类型、定点数类型、日期和时间类型、字符串类型、二进制类型以及 JSON 类型**。
+
+### 整数类型
+
+整数类型用于保存**没有小数部分的整数**。不同整数类型最主要的区别在于占用空间以及能够表示的数值范围。
+
+| 类型              | 存储空间 | 说明             |
+| ----------------- | -------: | ---------------- |
+| `TINYINT`         |   1 字节 | 较小的整数       |
+| `SMALLINT`        |   2 字节 | 小整数           |
+| `MEDIUMINT`       |   3 字节 | 中等范围整数     |
+| `INT` / `INTEGER` |   4 字节 | 最常用的普通整数 |
+| `BIGINT`          |   8 字节 | 范围较大的整数   |
+
+通常应根据实际数据范围选择类型。例如一般的编号、数量等可以使用 `INT`；如果数据范围可能明显超过 `INT`，则可以使用 `BIGINT`。
+
+`TINYINT` 还经常用于表示只有两种状态的数据。MySQL 中的 `BOOL` 和 `BOOLEAN` 实际上是 `TINYINT` 的同义写法，通常使用：
+
+- `0` 表示假；
+- `1` 表示真。
+
+但 `TINYINT` 本身仍然是**整数类型**，并不是只能保存 `0` 和 `1`。
+
+### 浮点数类型
+
+浮点数用于保存带有小数的数据，主要包括：
+
+| 类型     | 存储空间 | 特点                           |
+| -------- | -------: | ------------------------------ |
+| `FLOAT`  |   4 字节 | 单精度浮点数                   |
+| `DOUBLE` |   8 字节 | 双精度浮点数，精度高于 `FLOAT` |
+
+`FLOAT` 和 `DOUBLE` 保存的是**近似值**，不能简单理解为“最多保存几位小数”。通常 `FLOAT` 大约具有 7 位十进制有效数字的精度，`DOUBLE` 大约具有 15～16 位十进制有效数字的精度。
+
+例如：
+
+```sql
+CREATE TABLE t_number (
+    c1 FLOAT,
+    c2 DOUBLE
+);
+
+INSERT INTO t_number
+VALUES (3.123456789, 3.12345678901234567890);
+
+SELECT * FROM t_number;
+```
+
+查询结果中的数值可能与输入值存在一定差异，这是浮点数使用二进制近似表示十进制小数造成的。
+
+因此，**对于金额等要求精确计算的数据，不应优先使用 `FLOAT` 或 `DOUBLE`，而应使用 `DECIMAL`。**
+
+> 易错点：`FLOAT` 和 `DOUBLE` 的核心特点是“近似值”，不能把它们理解为分别“最多保留 5 位小数”和“最多保留 16 位小数”。小数位数和有效数字精度是两个不同概念。
+
+早期 MySQL 还支持类似下面的写法：
+
+```sql
+DOUBLE(M, D)
+```
+
+其中 `M` 表示总位数，`D` 表示小数位数。例如：
+
+```sql
+DOUBLE(3, 2)
+```
+
+表示总位数最多为 3，其中小数部分占 2 位，因此能够表示类似：
+
+```text
+1.23
+9.99
+```
+
+而 `10.00` 总共有 4 位数字，已经超过 `M = 3` 的范围。
+
+不过，这种为 `FLOAT`、`DOUBLE` 指定 `(M, D)` 的写法在 MySQL 8.0 中已经被弃用，不应再作为现代 MySQL 的推荐写法。需要精确控制总位数和小数位数时，应使用 `DECIMAL(M, D)`。
+
+### 定点数类型
+
+`DECIMAL` 是**定点数类型，也属于精确数值类型**，适合金额、价格、利率等不能接受浮点误差的数据。
+
+基本语法：
+
+```sql
+DECIMAL(M, D)
+```
+
+其中：
+
+- `M` 表示数字的**总位数**；
+- `D` 表示其中的**小数位数**；
+- 整数部分最多可以占 `M - D` 位。
+
+例如：
+
+```sql
+DECIMAL(5, 2)
+```
+
+可以保存：
+
+```text
+123.45
+10.00
+0.99
+```
+
+因为总位数最多为 5，其中有 2 位小数，所以整数部分最多为 3 位。
+
+再例如：
+
+```sql
+CREATE TABLE t_product (
+    price DECIMAL(10, 2)
+);
+```
+
+`price` 最多可以使用 10 位数字，其中 2 位位于小数点之后，适合保存商品价格。
+
+MySQL 中 `DECIMAL` 的最大精度 `M` 可以达到 65，小数位数 `D` 最大可以达到 30。
+
+> 注意：`DECIMAL` 并不是字符串类型，也不是简单地“按照普通字符串保存数字”。MySQL 会使用专门的二进制格式保存 `DECIMAL`，目的是对十进制数进行**精确存储和计算**。这一点与 `FLOAT`、`DOUBLE` 的近似存储有本质区别。
+
+### 日期和时间类型
+
+MySQL 提供了多种日期和时间类型，应根据需要保存的信息选择。
+
+| 类型        | 主要用途           | 常见格式              |
+| ----------- | ------------------ | --------------------- |
+| `YEAR`      | 只保存年份         | `2026`                |
+| `TIME`      | 保存时间或时间间隔 | `14:20:15`            |
+| `DATE`      | 保存年月日         | `2026-08-23`          |
+| `DATETIME`  | 保存日期和时间     | `2026-08-23 14:20:15` |
+| `TIMESTAMP` | 保存时间点         | `2026-08-23 14:20:15` |
+
+例如：
+
+```sql
+CREATE TABLE t_event (
+    event_year YEAR,
+    start_time TIME,
+    event_date DATE,
+    created_at DATETIME
+);
+```
+
+#### `YEAR`
+
+`YEAR` 用于只保存年份，例如：
+
+```text
+2026
+```
+
+一般占用 1 个字节。
+
+#### `TIME`
+
+`TIME` 用于保存时间，例如：
+
+```text
+14:20:15
+```
+
+需要注意的是，MySQL 的 `TIME` 不仅可以表示一天中的时间，也可以表示持续时间，因此其范围可以超过普通的 24 小时。
+
+#### `DATE`
+
+`DATE` 只保存年月日，例如：
+
+```text
+2026-08-23
+```
+
+通常占用 3 个字节。
+
+#### `DATETIME`
+
+`DATETIME` 同时保存日期和时间，例如：
+
+```text
+2026-08-23 14:20:15
+```
+
+其常用范围从：
+
+```text
+1000-01-01 00:00:00
+```
+
+到：
+
+```text
+9999-12-31 23:59:59
+```
+
+现代 MySQL 中，不包含小数秒时，`DATETIME` 通常占用 5 个字节。
+
+#### `TIMESTAMP`
+
+`TIMESTAMP` 同样可以保存日期和时间，例如：
+
+```text
+2026-08-23 14:20:15
+```
+
+但它与 `DATETIME` 的取值范围和处理方式并不完全相同。`TIMESTAMP` 的常见有效范围大约从 1970 年开始，到 2038 年 1 月结束，因此存在著名的**2038 年问题**。
+
+`TIMESTAMP` 不包含小数秒时通常占用 4 个字节。
+
+> 补充：所谓“2038 年问题”，主要来源于传统 32 位有符号整数表示 Unix 时间戳的范围限制。达到 2038 年 1 月后，这种表示方式会发生溢出。这与早期系统中的“千年虫问题”类似，都是由于时间数据的表示范围设计不足而产生的问题，但二者产生原因并不相同。
+
+日期和时间值建议使用清晰、标准的格式，例如：
+
+```sql
+INSERT INTO t_event (event_date, created_at)
+VALUES ('2026-08-23', '2026-08-23 14:20:15');
+```
+
+这样比使用紧凑数字形式更直观，也更不容易产生歧义。
+
+### 字符串类型
+
+字符串类型用于保存文本数据。常用类型包括 `CHAR`、`VARCHAR`、各种 `TEXT` 类型，以及 `ENUM` 和 `SET`。
+
+#### `CHAR`
+
+`CHAR(M)` 是**固定长度字符串**，其中 `M` 表示最多可以保存的字符数量，范围为 `0～255`。
+
+例如：
+
+```sql
+gender CHAR(1)
+```
+
+最多可以保存 1 个字符。
+
+再例如：
+
+```sql
+code CHAR(4)
+```
+
+如果保存：
+
+```text
+AB
+```
+
+MySQL 会按照固定长度字段处理该值。`CHAR` 在存储时会在右侧补充空格达到定义长度，而正常查询 `CHAR` 值时，其尾部用于补齐的空格通常不会作为最终结果返回。
+
+如果向 `CHAR(4)` 中插入超过 4 个有效字符的数据，例如：
+
+```text
+ABCDE
+```
+
+在严格 SQL 模式下一般会因为数据过长而报错。
+
+`CHAR` 比较适合保存**长度基本固定的数据**，例如性别代码、国家代码、固定长度编号等。
+
+#### `VARCHAR`
+
+`VARCHAR(M)` 是**可变长度字符串**，其中 `M` 表示允许保存的最大字符数量。
+
+例如：
+
+```sql
+username VARCHAR(32)
+```
+
+表示用户名最多允许保存 32 个字符。
+
+与 `CHAR` 不同，`VARCHAR` 不会为了达到定义长度而主动补充空格，而是根据实际字符串长度占用空间。其实际存储通常包括：
+
+```text
+实际字符串数据 + 1 或 2 个字节的长度信息
+```
+
+长度信息用于记录当前字符串实际占用了多少字节。如果字段可能使用的字节数不超过 255，通常使用 1 个字节记录长度；超过 255 时通常使用 2 个字节。
+
+例如：
+
+```sql
+VARCHAR(50)
+```
+
+表示最多允许保存 50 个字符。如果实际只保存：
+
+```text
+Java
+```
+
+就不会按照 50 个字符的固定空间保存。
+
+`VARCHAR` 声明时允许的理论长度上限为 65,535 个字符，但**实际能够定义多长还会受到字符集、整行最大大小以及其他字段的影响**，不能简单认为任何情况下都能够创建 `VARCHAR(65535)`。
+
+如果字段定义为：
+
+```sql
+VARCHAR(10)
+```
+
+却插入超过 10 个字符的内容，在严格模式下通常会报错；非严格模式下可能会发生截断并产生警告。
+
+> 注意：`CHAR(M)` 和 `VARCHAR(M)` 中的 `M` 表示的是**字符数量，而不是字节数量**。例如使用 `utf8mb4` 时，一个字符最多可能占用多个字节，因此“最多 20 个字符”和“最多 20 个字节”不是同一个概念。
+
+`CHAR` 和 `VARCHAR` 的主要区别可以概括为：
+
+| 对比项       | `CHAR`             | `VARCHAR`                                        |
+| ------------ | ------------------ | ------------------------------------------------ |
+| 长度         | 固定长度           | 可变长度                                         |
+| 最大声明长度 | 255 个字符         | 理论上最多 65,535 个字符，但受行大小和字符集限制 |
+| 存储方式     | 按固定长度处理     | 按实际数据长度保存，并记录长度信息               |
+| 适合场景     | 长度基本固定的数据 | 长度变化明显的数据                               |
+
+#### `TEXT`
+
+`TEXT` 系列用于保存长度较大的文本数据，包括：
+
+| 类型         |           最大长度 |
+| ------------ | -----------------: |
+| `TINYTEXT`   |           255 字节 |
+| `TEXT`       |        65,535 字节 |
+| `MEDIUMTEXT` |    16,777,215 字节 |
+| `LONGTEXT`   | 4,294,967,295 字节 |
+
+例如，大段文章内容可以定义为：
+
+```sql
+content TEXT
+```
+
+需要特别注意，`TEXT` 系列的最大长度本质上按照**字节数**限制，因此实际能够保存多少个字符还要取决于字符集。使用多字节字符集时，最大字符数量可能明显小于表中对应的最大字节数。
+
+#### `ENUM`
+
+`ENUM` 表示**枚举类型**，用于规定一个字段只能从预先定义的一组选项中选择一个值。
+
+语法：
+
+```sql
+字段名 ENUM('值1', '值2', '值3')
+```
+
+例如：
+
+```sql
+gender ENUM('男', '女', '未知')
+```
+
+插入数据时只能选择定义好的枚举值：
+
+```sql
+INSERT INTO t_user (gender)
+VALUES ('男');
+```
+
+在 JDBC 中查询 `ENUM` 字段时，一般可以按照字符串处理。
+
+#### `SET`
+
+`SET` 同样用于限定字段可以保存的值，但与 `ENUM` 不同：**`ENUM` 通常选择一个值，而 `SET` 可以同时选择多个值。**
+
+语法：
+
+```sql
+字段名 SET('值1', '值2', '值3')
+```
+
+例如：
+
+```sql
+hobby SET('阅读', '音乐', '运动')
+```
+
+可以保存单个值：
+
+```text
+阅读
+```
+
+也可以保存多个值：
+
+```text
+阅读,音乐
+```
+
+定义 `SET` 时，各个候选值不应重复。
+
+### 二进制类型
+
+`BLOB` 是 **Binary Large Object（二进制大对象）**，用于保存较大的二进制数据，例如图片、音频、视频或其他文件内容。
+
+常见类型包括：
+
+| 类型         |           最大长度 |
+| ------------ | -----------------: |
+| `TINYBLOB`   |           255 字节 |
+| `BLOB`       |        65,535 字节 |
+| `MEDIUMBLOB` |    16,777,215 字节 |
+| `LONGBLOB`   | 4,294,967,295 字节 |
+
+`TEXT` 和 `BLOB` 都可以保存较大数据，但它们处理的数据性质不同：
+
+- `TEXT` 保存的是**字符数据**，会涉及字符集和排序规则。
+- `BLOB` 保存的是**二进制字节数据**，不会按照普通文本字符集处理。
+
+例如：
+
+```sql
+CREATE TABLE t_file (
+    id INT,
+    file_data BLOB
+);
+```
+
+这种表可以直接保存文件的二进制内容。
+
+### JSON 类型
+
+MySQL 从 **5.7.8** 开始提供原生 `JSON` 数据类型，MySQL 8.0 又进一步增强了 JSON 的查询、修改和索引等能力。
+
+#### JSON 的基本概念
+
+**JSON（JavaScript Object Notation）是一种标准的轻量级数据交换格式，用于按照结构化形式表示和传输数据。** JSON 本质上描述的是一种数据格式，并不是 JavaScript 专用的数据结构，Java、JavaScript、Python 等多种语言都可以读取和生成 JSON。
+
+JSON 中最常见的结构是**对象和数组**。
+
+JSON 对象使用 `{}` 表示，由若干个“键和值”组成：
+
+```json
+{
+    "name": "Tom",
+    "age": 20
+}
+```
+
+其中：
+
+- `"name"`、`"age"` 是键；
+- `"Tom"`、`20` 是对应的值；
+- 键和值之间使用 `:` 分隔；
+- 多个成员之间使用 `,` 分隔。
+
+JSON 数组使用 `[]` 表示，用于保存一组有顺序的值：
+
+```json
+["Java", "MySQL", "Redis"]
+```
+
+数组中还可以保存对象：
+
+```json
+[
+    {"name": "Tom", "age": 20},
+    {"name": "Lucy", "age": 21}
+]
+```
+
+JSON 字符串本身使用**双引号**：
+
+```json
+"hello"
+```
+
+JSON 中常见的值类型包括：
+
+```text
+对象
+数组
+字符串
+数字
+布尔值 true / false
+null
+```
+
+例如：
+
+```json
+{
+    "name": "Tom",
+    "age": 20,
+    "student": true,
+    "email": null,
+    "skills": ["Java", "MySQL"]
+}
+```
+
+> 易错点：JSON 语法中的字符串必须使用双引号，例如 `"Tom"`。在 SQL 中如果要把整段 JSON 文本作为一个字符串字面量写入语句，通常又会在最外层使用 SQL 的单引号，因此经常出现 `'{"name":"Tom"}'` 这样的写法。
+
+#### 创建和使用 JSON 字段
+
+例如：
+
+```sql
+CREATE TABLE t_user_profile (
+    id INT,
+    profile JSON
+);
+```
+
+插入 JSON 对象：
+
+```sql
+INSERT INTO t_user_profile
+VALUES (
+    1,
+    '{"name":"John","age":30}'
+);
+```
+
+查询：
+
+```sql
+SELECT * FROM t_user_profile;
+```
+
+使用 `JSON` 类型而不是普通 `VARCHAR` 保存 JSON 数据的一个重要区别在于：MySQL 会验证写入的数据是否符合 JSON 格式，并能够使用专门的 JSON 函数和路径表达式进行处理。
+
+#### JSON 路径
+
+读取 JSON 中的某一部分数据时，经常需要使用 **JSON Path（JSON 路径）**。
+
+JSON 路径以 `$` 表示整个 JSON 文档。
+
+例如：
+
+```json
+{
+    "name": "John",
+    "age": 30,
+    "skills": ["Java", "MySQL"]
+}
+```
+
+对应的常用路径为：
+
+```text
+$              整个 JSON 文档
+$.name         name 属性
+$.age          age 属性
+$.skills       skills 数组
+$.skills[0]    skills 数组中的第一个元素
+```
+
+数组下标从 `0` 开始。
+
+#### 创建 JSON
+
+`JSON_OBJECT()` 用于创建 JSON 对象：
+
+```sql
+SELECT JSON_OBJECT(
+    'name', 'John',
+    'age', 30
+);
+```
+
+结果：
+
+```json
+{"name": "John", "age": 30}
+```
+
+`JSON_ARRAY()` 用于创建 JSON 数组：
+
+```sql
+SELECT JSON_ARRAY(
+    'apple',
+    'banana',
+    'orange'
+);
+```
+
+结果：
+
+```json
+["apple", "banana", "orange"]
+```
+
+合并 JSON 时可以使用 `JSON_MERGE_PATCH()` 等函数：
+
+```sql
+SELECT JSON_MERGE_PATCH(
+    '{"a":1}',
+    '{"b":2}'
+);
+```
+
+结果：
+
+```json
+{"a": 1, "b": 2}
+```
+
+早期还可以看到：
+
+```sql
+JSON_MERGE()
+```
+
+但 `JSON_MERGE()` 在 MySQL 8.0 中已经被弃用，现代代码应根据需求使用 `JSON_MERGE_PATCH()` 或 `JSON_MERGE_PRESERVE()`。
+
+#### 查询 JSON
+
+`JSON_EXTRACT()` 用于按照路径提取 JSON 数据：
+
+```sql
+SELECT JSON_EXTRACT(
+    '{"name":"John","age":30}',
+    '$.name'
+);
+```
+
+结果：
+
+```text
+"John"
+```
+
+这里返回的仍然是 **JSON 值**，因此字符串外层仍然保留 JSON 的双引号。
+
+如果字段本身是 JSON 类型，也可以使用 `->` 运算符：
+
+```sql
+SELECT profile->'$.name'
+FROM t_user_profile;
+```
+
+它相当于按照 JSON 路径提取数据，并保留 JSON 类型的表示形式。
+
+如果希望获得去掉 JSON 双引号后的普通字符串，可以使用：
+
+```sql
+SELECT JSON_UNQUOTE(
+    JSON_EXTRACT(
+        '{"name":"John"}',
+        '$.name'
+    )
+);
+```
+
+结果：
+
+```text
+John
+```
+
+也可以直接使用 `->>` 简化：
+
+```sql
+SELECT profile->>'$.name'
+FROM t_user_profile;
+```
+
+因此，对于 JSON 中的字符串：
+
+```sql
+profile->'$.name'
+```
+
+结果类似：
+
+```text
+"John"
+```
+
+而：
+
+```sql
+profile->>'$.name'
+```
+
+结果类似：
+
+```text
+John
+```
+
+> 结论：`->` 主要用于取得 **JSON 值**，`->>` 则会进一步去除 JSON 字符串的外层引号，更适合直接取得普通标量文本。
+
+#### 搜索 JSON
+
+`JSON_CONTAINS_PATH()` 用于判断指定路径是否存在：
+
+```sql
+SELECT JSON_CONTAINS_PATH(
+    '{"a":1,"b":2}',
+    'one',
+    '$.a',
+    '$.c'
+);
+```
+
+其中 `'one'` 表示只要指定路径中**至少一个存在**就返回 `1`。由于 `$.a` 存在，因此结果为：
+
+```text
+1
+```
+
+如果使用 `'all'`，则要求指定路径全部存在。
+
+`JSON_CONTAINS()` 可以判断指定位置是否包含给定的 JSON 值：
+
+```sql
+SELECT JSON_CONTAINS(
+    '{"a":1,"b":2}',
+    '1',
+    '$.a'
+);
+```
+
+因为 `$.a` 对应的值就是数字 `1`，因此结果为：
+
+```text
+1
+```
+
+`JSON_SEARCH()` 用于在 JSON 文档中搜索字符串，并返回匹配值所在的路径：
+
+```sql
+SELECT JSON_SEARCH(
+    '{"name":"John","email":"john@test.com"}',
+    'one',
+    'john%'
+);
+```
+
+结果类似：
+
+```text
+"$.email"
+```
+
+这里 `'one'` 表示找到一个符合条件的位置后即可返回。
+
+#### 修改 JSON
+
+`JSON_SET()` 可以**新增不存在的值，也可以修改已经存在的值**：
+
+```sql
+SELECT JSON_SET(
+    '{"a":1}',
+    '$.b', 2,
+    '$.c', 3
+);
+```
+
+结果：
+
+```json
+{"a": 1, "b": 2, "c": 3}
+```
+
+如果指定路径已经存在，则替换原值：
+
+```sql
+SELECT JSON_SET(
+    '{"a":1}',
+    '$.a', 10
+);
+```
+
+结果：
+
+```json
+{"a": 10}
+```
+
+`JSON_INSERT()` **只负责插入不存在的路径**，已经存在的路径不会被修改：
+
+```sql
+SELECT JSON_INSERT(
+    '{"a":1}',
+    '$.b', 2,
+    '$.a', 99
+);
+```
+
+结果：
+
+```json
+{"a": 1, "b": 2}
+```
+
+其中 `$.b` 原本不存在，因此被插入；`$.a` 已经存在，因此仍然保持 `1`。
+
+`JSON_REPLACE()` 与之相反，**只修改已经存在的路径，不创建不存在的路径**：
+
+```sql
+SELECT JSON_REPLACE(
+    '{"a":1,"b":2}',
+    '$.a', 10,
+    '$.c', 30
+);
+```
+
+结果：
+
+```json
+{"a": 10, "b": 2}
+```
+
+其中 `$.a` 已存在，因此被修改；`$.c` 不存在，因此不会创建。
+
+三者可以概括为：
+
+| 函数             | 路径存在 | 路径不存在 |
+| ---------------- | -------- | ---------- |
+| `JSON_SET()`     | 修改     | 新增       |
+| `JSON_INSERT()`  | 不修改   | 新增       |
+| `JSON_REPLACE()` | 修改     | 不新增     |
+
+`JSON_REMOVE()` 用于删除指定路径：
+
+```sql
+SELECT JSON_REMOVE(
+    '{"a":1,"b":2,"c":3}',
+    '$.b'
+);
+```
+
+结果：
+
+```json
+{"a": 1, "c": 3}
+```
+
+#### 获取 JSON 属性
+
+`JSON_TYPE()` 用于判断 JSON 值的类型：
+
+```sql
+SELECT JSON_TYPE('{"name":"John"}');
+```
+
+结果：
+
+```text
+OBJECT
+```
+
+数组：
+
+```sql
+SELECT JSON_TYPE('[1,2,3]');
+```
+
+结果：
+
+```text
+ARRAY
+```
+
+JSON 字符串：
+
+```sql
+SELECT JSON_TYPE('"hello"');
+```
+
+结果：
+
+```text
+STRING
+```
+
+`JSON_LENGTH()` 可以获取 JSON 数组的元素数量：
+
+```sql
+SELECT JSON_LENGTH('[1,2,3,4]');
+```
+
+结果：
+
+```text
+4
+```
+
+对于对象，`JSON_LENGTH()` 返回对象成员的数量。
+
+`JSON_KEYS()` 可以获取 JSON 对象中的所有键：
+
+```sql
+SELECT JSON_KEYS(
+    '{"a":1,"b":2}'
+);
+```
+
+结果：
+
+```json
+["a", "b"]
+```
+
+> 结论：JSON 的常见操作可以按照“**创建 → 路径定位 → 查询/搜索 → 修改 → 获取属性**”进行理解。核心是先理解 JSON 对象、数组以及 `$` 路径，再学习各类 JSON 函数，使用时会更加清晰。
+
+## 表结构的增删改
+
+创建表之后，如果需要修改表名、增加字段、修改字段或删除字段，可以使用 `ALTER TABLE` 语句完成。这类用于**定义或修改数据库对象结构**的 SQL 属于 **DDL（Data Definition Language，数据定义语言）**。
+
+例如，先创建一张学生表：
+
+```sql
+CREATE TABLE t_student (
+    no BIGINT,
+    name VARCHAR(255),
+    age INT COMMENT '年龄'
+);
+```
+
+后续可以围绕这张表修改表结构。
+
+### 查看建表语句
+
+使用 `SHOW CREATE TABLE` 可以查看一张表实际对应的建表 SQL：
+
+```sql
+SHOW CREATE TABLE t_student;
+```
+
+基本语法：
+
+```sql
+SHOW CREATE TABLE 表名;
+```
+
+该命令不仅可以查看字段定义，还可以看到表的存储引擎、字符集等建表信息，因此在需要确认一张表当前完整结构时非常实用。
+
+### 修改表名
+
+基本语法：
+
+```sql
+ALTER TABLE 旧表名 RENAME 新表名;
+```
+
+例如：
+
+```sql
+ALTER TABLE t_student RENAME t_stu;
+```
+
+执行后，原来的 `t_student` 被重新命名为 `t_stu`，表中的数据不会因此被删除。
+
+也可以写成：
+
+```sql
+ALTER TABLE t_student RENAME TO t_stu;
+```
+
+### 新增字段
+
+使用 `ADD` 可以为已经存在的表增加字段：
+
+```sql
+ALTER TABLE 表名 ADD 字段名 数据类型;
+```
+
+例如：
+
+```sql
+ALTER TABLE t_student ADD gender CHAR(1);
+```
+
+执行后，`t_student` 表中会新增 `gender` 字段。
+
+`COLUMN` 关键字可以写，也可以省略：
+
+```sql
+ALTER TABLE t_student ADD COLUMN gender CHAR(1);
+```
+
+两种写法含义相同。
+
+如果新增字段时还需要指定默认值、注释等属性，也可以直接写在字段定义中：
+
+```sql
+ALTER TABLE t_student
+ADD gender CHAR(1) DEFAULT '男' COMMENT '性别';
+```
+
+### 修改字段名
+
+使用 `CHANGE` 可以修改字段名称：
+
+```sql
+ALTER TABLE 表名
+CHANGE 旧字段名 新字段名 数据类型;
+```
+
+例如，将 `no` 修改为 `student_no`：
+
+```sql
+ALTER TABLE t_student
+CHANGE no student_no BIGINT;
+```
+
+需要注意，使用 `CHANGE` 修改字段名时，**必须重新写出该字段的完整字段定义，至少需要指定数据类型**。
+
+例如原字段定义为：
+
+```sql
+age INT NOT NULL COMMENT '年龄'
+```
+
+如果只是想将 `age` 改名为 `student_age`，应当将需要保留的属性一起写出：
+
+```sql
+ALTER TABLE t_student
+CHANGE age student_age INT NOT NULL COMMENT '年龄';
+```
+
+> 易错点：`CHANGE` 不只是简单写“旧字段名 → 新字段名”，而是重新定义这个字段。原字段上的数据类型、`NOT NULL`、`DEFAULT`、`COMMENT` 等属性如果需要继续保留，应在新的字段定义中正确写出。
+
+### 修改字段的数据类型
+
+如果只需要修改字段的数据类型或其他字段属性，而不修改字段名，可以使用 `MODIFY`：
+
+```sql
+ALTER TABLE 表名
+MODIFY 字段名 数据类型;
+```
+
+例如：
+
+```sql
+ALTER TABLE t_student
+MODIFY age BIGINT;
+```
+
+也可以写成：
+
+```sql
+ALTER TABLE t_student
+MODIFY COLUMN age BIGINT;
+```
+
+其中 `COLUMN` 可以省略。
+
+`MODIFY` 实际上也是重新定义字段，因此如果原字段还有需要保留的其他属性，也应一并写出：
+
+```sql
+ALTER TABLE t_student
+MODIFY age BIGINT NOT NULL COMMENT '年龄';
+```
+
+`CHANGE` 和 `MODIFY` 的主要区别是：
+
+| 语句     | 是否可以修改字段名 | 是否可以修改字段定义 |
+| -------- | ------------------ | -------------------- |
+| `CHANGE` | 可以               | 可以                 |
+| `MODIFY` | 不可以             | 可以                 |
+
+> 注意：修改字段数据类型时，MySQL 可能需要转换表中已经存在的数据。如果原有数据无法正确转换成新的数据类型，语句可能执行失败，或者出现数据截断、精度损失等问题，因此修改已有数据的字段类型时需要特别谨慎。
+
+### 删除字段
+
+使用 `DROP` 可以删除表中的某个字段：
+
+```sql
+ALTER TABLE 表名 DROP 字段名;
+```
+
+例如：
+
+```sql
+ALTER TABLE t_student DROP age;
+```
+
+也可以写成：
+
+```sql
+ALTER TABLE t_student DROP COLUMN age;
+```
+
+执行后，`age` 字段以及该字段中原来保存的所有数据都会被删除。
+
+> 注意：删除字段不仅会修改表结构，还会永久删除该字段中保存的数据。执行 `DROP COLUMN` 前应确认该字段以及其中的数据已经不再需要。
+
+表结构的常见修改操作可以概括为：
+
+| 操作         | 语法                                                  |
+| ------------ | ----------------------------------------------------- |
+| 修改表名     | `ALTER TABLE 表名 RENAME 新表名;`                     |
+| 新增字段     | `ALTER TABLE 表名 ADD 字段名 数据类型;`               |
+| 修改字段名   | `ALTER TABLE 表名 CHANGE 旧字段名 新字段名 数据类型;` |
+| 修改字段定义 | `ALTER TABLE 表名 MODIFY 字段名 数据类型;`            |
+| 删除字段     | `ALTER TABLE 表名 DROP 字段名;`                       |
+
+---
+
+## DML 数据操作
+
+**DML（Data Manipulation Language，数据操作语言）**用于操作表中已经保存的数据，最常见的操作包括：
+
+- `INSERT`：增加数据；
+- `DELETE`：删除数据；
+- `UPDATE`：修改数据。
+
+DDL 主要操作的是**表等数据库对象的结构**，而 DML 主要操作的是**表中的记录**。
+
+### `INSERT` 插入数据
+
+基本语法：
+
+```sql
+INSERT INTO 表名 (字段名1, 字段名2, 字段名3)
+VALUES (值1, 值2, 值3);
+```
+
+例如：
+
+```sql
+INSERT INTO t_student (no, name, age)
+VALUES (1, 'Jack', 20);
+```
+
+字段名和值必须按照位置一一对应：
+
+```text
+no   → 1
+name → 'Jack'
+age  → 20
+```
+
+`INSERT` 并不要求每次都为表中的所有字段提供值，可以只指定需要插入数据的部分字段。例如：
+
+```sql
+INSERT INTO t_student (no, name)
+VALUES (1, 'Jack');
+```
+
+假设 `t_student` 表结构为：
+
+```sql
+CREATE TABLE t_student (
+    no BIGINT,
+    name VARCHAR(255),
+    age INT
+);
+```
+
+上面的 `INSERT` 没有为 `age` 字段提供值。如果该字段允许为 `NULL`，并且没有设置其他默认值，那么新记录中的 `age` 就会保存为 `NULL`：
+
+```text
+no  name   age
+1   Jack   NULL
+```
+
+不过，**没有出现在 `INSERT` 字段列表中的字段并不一定都会变成 `NULL`**，实际结果取决于字段本身的定义：
+
+- 字段设置了 `DEFAULT` 默认值时，通常使用默认值；
+- 字段允许为 `NULL`，并且没有其他默认值时，可以得到 `NULL`；
+- 字段被限制为 `NOT NULL`，同时又没有可用的默认值时，插入可能失败。
+
+例如：
+
+```sql
+CREATE TABLE t_student (
+    no BIGINT,
+    name VARCHAR(255),
+    age INT,
+    gender CHAR(1) DEFAULT '男'
+);
+```
+
+执行：
+
+```sql
+INSERT INTO t_student (no, name)
+VALUES (1, 'Jack');
+```
+
+得到的数据可能为：
+
+```text
+no  name   age    gender
+1   Jack   NULL   男
+```
+
+其中 `age` 没有默认值且允许为 `NULL`，因此得到 `NULL`；`gender` 设置了默认值，因此得到 `'男'`。
+
+如果某条记录已经通过 `INSERT` 插入表中，之后想为原来为 `NULL` 的字段补充值，就不能再次使用 `INSERT` 修改原记录，而应该使用 `UPDATE`：
+
+```sql
+UPDATE t_student
+SET age = 20
+WHERE no = 1;
+```
+
+这是因为 `INSERT` 的作用是**新增记录**，再次执行 `INSERT` 会继续向表中添加一条新记录，而不会修改已经存在的记录。
+
+例如已有：
+
+```text
+no  name   age
+1   Jack   NULL
+```
+
+如果再次执行：
+
+```sql
+INSERT INTO t_student (no, name, age)
+VALUES (1, 'Jack', 20);
+```
+
+它表达的是“再新增一条记录”，而不是把原记录中的 `age` 从 `NULL` 修改为 `20`。修改已有记录应使用：
+
+```sql
+UPDATE t_student
+SET age = 20
+WHERE no = 1;
+```
+
+> 结论：`INSERT` 用于**新增记录**，`UPDATE` 用于**修改已有记录**。插入时可以只指定部分字段，未指定字段最终使用 `NULL`、默认值还是导致插入失败，需要根据字段本身的定义判断。
+
+字段列表也可以全部省略：
+
+```sql
+INSERT INTO t_student
+VALUES (1, 'Jack', 20);
+```
+
+省略字段列表意味着按照**表中字段定义的顺序，为全部字段依次提供值**，因此值的数量和顺序必须与表结构完全对应。
+
+为了提高 SQL 的可读性和可维护性，实际开发中通常更推荐显式写出字段名：
+
+```sql
+INSERT INTO t_student (no, name, age)
+VALUES (1, 'Jack', 20);
+```
+
+#### 一次插入多条数据
+
+一条 `INSERT` 语句可以同时插入多条记录：
+
+```sql
+INSERT INTO t_student (no, name, age)
+VALUES
+    (1, 'Jack', 20),
+    (2, 'Lucy', 23),
+    (3, 'Tom', 19);
+```
+
+每一组小括号表示一条记录，各组记录都必须与前面的字段列表正确对应。
+
+相比连续执行多条单行 `INSERT`，一次插入多条数据通常更加简洁，在批量插入场景下也更加高效。
+
+### `DELETE` 删除数据
+
+`DELETE` 用于删除表中的记录。
+
+删除符合条件的数据：
+
+```sql
+DELETE FROM 表名
+WHERE 条件;
+```
+
+例如，只删除学号为 `1` 的学生：
+
+```sql
+DELETE FROM t_student
+WHERE no = 1;
+```
+
+如果符合条件的记录有多条，则这些记录都会被删除。
+
+如果省略 `WHERE` 条件：
+
+```sql
+DELETE FROM t_student;
+```
+
+则表示删除表中的**所有记录**。
+
+> 易错点：`DELETE` 后是否存在 `WHERE` 条件会直接决定删除范围。遗漏 `WHERE` 可能导致整张表的数据被全部删除，因此执行删除语句时必须重点检查删除条件。
+
+`DELETE` 删除的是数据，表本身仍然存在：
+
+```text
+DELETE FROM t_student;
+```
+
+执行后：
+
+- 表结构仍然存在；
+- 字段仍然存在；
+- 表中的记录被删除。
+
+这与：
+
+```sql
+DROP TABLE t_student;
+```
+
+完全不同。`DROP TABLE` 会连同**表结构和表中数据一起删除**。
+
+#### `DELETE` 与事务
+
+`DELETE` 属于 DML。如果使用支持事务的存储引擎，例如常见的 `InnoDB`，并且删除操作处于尚未提交的事务中，则可以通过事务回滚恢复删除的数据。
+
+例如：
+
+```sql
+START TRANSACTION;
+
+DELETE FROM t_student
+WHERE no = 1;
+
+ROLLBACK;
+```
+
+执行 `ROLLBACK` 后，本次事务中的删除操作会被撤销。
+
+> 注意：能够通过事务回滚的前提是操作处于支持事务的环境中，并且事务还没有提交。一旦事务已经 `COMMIT`，不能再通过普通的 `ROLLBACK` 撤销已经提交的数据修改。
+
+### `TRUNCATE` 清空表
+
+如果需要直接清空整张表中的数据，还可以使用：
+
+```sql
+TRUNCATE TABLE 表名;
+```
+
+例如：
+
+```sql
+TRUNCATE TABLE t_student;
+```
+
+`TRUNCATE TABLE` 的作用是**快速清空整张表的数据，同时保留表结构**。
+
+执行前：
+
+```text
+t_student
+├── 表结构：存在
+└── 数据：存在
+```
+
+执行：
+
+```sql
+TRUNCATE TABLE t_student;
+```
+
+执行后：
+
+```text
+t_student
+├── 表结构：仍然存在
+└── 数据：全部清空
+```
+
+虽然 `DELETE FROM 表名;` 和 `TRUNCATE TABLE 表名;` 都能清空整张表，但二者的性质并不相同：
+
+| 对比项                             | `DELETE FROM 表名` | `TRUNCATE TABLE 表名` |
+| ---------------------------------- | ------------------ | --------------------- |
+| SQL 分类                           | DML                | DDL                   |
+| 是否可以带 `WHERE`                 | 可以               | 不可以                |
+| 是否可以只删除部分数据             | 可以               | 不可以                |
+| 是否保留表结构                     | 保留               | 保留                  |
+| 普通事务中能否通过 `ROLLBACK` 撤销 | 通常可以           | 通常不可以            |
+| 清空整张大表的效率                 | 相对较低           | 通常较高              |
+
+`DELETE` 通常按照记录进行删除，因此能够精确控制删除条件；`TRUNCATE` 面向的是**整张表的快速清空**，不允许使用 `WHERE`。
+
+> 注意：在 MySQL 中，`TRUNCATE TABLE` 属于 DDL，并会导致隐式提交，因此不能把它当作普通 `DELETE` 一样依赖事务回滚恢复数据。对于重要数据，执行前应确认已经不再需要，必要时先进行备份。
+
+因此：
+
+```sql
+DELETE FROM t_student
+WHERE age < 18;
+```
+
+适合删除部分数据，而：
+
+```sql
+TRUNCATE TABLE t_student;
+```
+
+适合明确需要清空整张表的场景。
+
+### `UPDATE` 修改数据
+
+`UPDATE` 用于修改表中已经存在的数据。
+
+基本语法：
+
+```sql
+UPDATE 表名
+SET 字段名1 = 值1,
+    字段名2 = 值2
+WHERE 条件;
+```
+
+例如，将学号为 `1` 的学生年龄修改为 `21`：
+
+```sql
+UPDATE t_student
+SET age = 21
+WHERE no = 1;
+```
+
+一次也可以修改多个字段：
+
+```sql
+UPDATE t_student
+SET name = 'Jack Chen',
+    age = 21
+WHERE no = 1;
+```
+
+执行逻辑可以理解为：
+
+1. 根据 `WHERE` 条件找出需要修改的记录。
+2. 使用 `SET` 指定新的字段值。
+3. 将匹配记录中的对应字段更新为新值。
+
+如果省略 `WHERE`：
+
+```sql
+UPDATE t_student
+SET age = 20;
+```
+
+则**表中的所有记录都会被修改**，所有学生的 `age` 都会变成 `20`。
+
+> 易错点：`UPDATE` 与 `DELETE` 一样，必须特别注意 `WHERE` 条件。没有 `WHERE` 并不代表 SQL 语法错误，而是表示对表中的全部记录执行操作。
+
+DML 中最基本的三个数据变更操作可以概括为：
+
+| 操作 | SQL      | 作用           |
+| ---- | -------- | -------------- |
+| 增加 | `INSERT` | 向表中插入数据 |
+| 删除 | `DELETE` | 删除表中的数据 |
+| 修改 | `UPDATE` | 修改表中的数据 |
+
+在数据库的日常使用中，`INSERT`、`DELETE` 和 `UPDATE` 主要负责改变数据，而实际业务中通常更复杂、使用频率也非常高的是用于**查询数据的 `SELECT` 语句**。
+
+## 约束（Constraint）
+
+**约束（Constraint）是对表中字段数据设置的限制规则，用于保证数据的完整性、有效性和一致性。** 创建表时可以为字段添加约束，使不符合业务规则的数据无法随意写入数据库。
+
+例如，用户注册时可能存在以下要求：
+
+- 用户名不能为空；
+- 用户名不能重复；
+- 年龄必须满足一定范围；
+- 一条学生记录所填写的学校编号必须真实存在。
+
+这些要求都可以通过相应的数据库约束实现。
+
+MySQL 中常见的约束包括：
+
+| 约束       | 关键字        | 主要作用                       |
+| ---------- | ------------- | ------------------------------ |
+| 非空约束   | `NOT NULL`    | 字段值不能为 `NULL`            |
+| 检查约束   | `CHECK`       | 字段值必须满足指定条件         |
+| 唯一性约束 | `UNIQUE`      | 字段值或字段组合不能重复       |
+| 主键约束   | `PRIMARY KEY` | 唯一标识表中的每一条记录       |
+| 外键约束   | `FOREIGN KEY` | 保证不同表之间引用数据的一致性 |
+
+约束可以在创建表时直接定义，也可以在表创建以后通过 `ALTER TABLE` 添加或删除。
+
+---
+
+### 非空约束
+
+`NOT NULL` 用于规定某个字段**不能保存 `NULL`**。
+
+例如：
+
+```sql
+CREATE TABLE t_student (
+    no INT,
+    name VARCHAR(255) NOT NULL,
+    age INT
+);
+```
+
+其中：
+
+```sql
+name VARCHAR(255) NOT NULL
+```
+
+表示每一条学生记录都必须具有姓名。
+
+例如：
+
+```sql
+INSERT INTO t_student (no, age)
+VALUES (1, 20);
+```
+
+由于没有为 `name` 提供值，而 `name` 又被设置为 `NOT NULL`，在没有其他可用默认值的情况下，插入会失败。
+
+可以正常执行：
+
+```sql
+INSERT INTO t_student (no, name, age)
+VALUES (1, 'Jack', 20);
+```
+
+> 易错点：`NOT NULL` 限制的是 SQL 中的 `NULL`，并不等于“不能为空字符串”。对于字符串字段，`''` 是一个长度为 0 的字符串，与 `NULL` 是两个不同的值。因此，仅使用 `NOT NULL` 并不能阻止插入空字符串。
+
+---
+
+### 检查约束
+
+`CHECK` 用于规定数据必须满足某个条件，只有符合检查条件的数据才能正常写入。
+
+例如，要求学生年龄必须大于 `18`：
+
+```sql
+CREATE TABLE t_student (
+    no INT,
+    name VARCHAR(255),
+    age INT,
+    CHECK (age > 18)
+);
+```
+
+此时：
+
+```sql
+INSERT INTO t_student
+VALUES (1, 'Jack', 20);
+```
+
+满足：
+
+```text
+20 > 18
+```
+
+因此可以正常插入。
+
+而：
+
+```sql
+INSERT INTO t_student
+VALUES (2, 'Lucy', 16);
+```
+
+不满足检查条件，因此会违反 `CHECK` 约束。
+
+也可以主动为检查约束命名：
+
+```sql
+CREATE TABLE t_student (
+    no INT,
+    name VARCHAR(255),
+    age INT,
+    CONSTRAINT t_student_age_check CHECK (age > 18)
+);
+```
+
+约束名称：
+
+```text
+t_student_age_check
+```
+
+后续管理约束时可以通过名称定位该约束。
+
+如果业务要求年龄不仅必须大于 `18`，而且**绝对不能为空**，还需要同时使用 `NOT NULL`：
+
+```sql
+CREATE TABLE t_student (
+    no INT,
+    name VARCHAR(255),
+    age INT NOT NULL,
+    CHECK (age > 18)
+);
+```
+
+这是因为：
+
+```sql
+CHECK (age > 18)
+```
+
+主要负责检查年龄值是否满足条件，不能替代 `NOT NULL` 对空值进行限制。
+
+> 注意：MySQL 从 **8.0.16** 开始真正执行 `CHECK` 约束。更早的一些 MySQL 版本虽然允许写出 `CHECK` 语法，但可能只解析并保存相关定义，而不会真正阻止不符合条件的数据写入。因此学习旧版本资料时需要注意版本差异。
+
+---
+
+### 唯一性约束
+
+`UNIQUE` 用于保证某个字段或某几个字段组成的值**不能出现重复**。
+
+#### 单字段唯一
+
+例如，要求每个学生的邮箱不能重复：
+
+```sql
+CREATE TABLE t_student (
+    no INT,
+    name VARCHAR(255),
+    email VARCHAR(255) UNIQUE
+);
+```
+
+第一次插入：
+
+```sql
+INSERT INTO t_student
+VALUES (1, 'Jack', 'jack@test.com');
+```
+
+可以成功。
+
+如果再次插入相同邮箱：
+
+```sql
+INSERT INTO t_student
+VALUES (2, 'Lucy', 'jack@test.com');
+```
+
+则会违反唯一性约束。
+
+在字段定义后直接写：
+
+```sql
+email VARCHAR(255) UNIQUE
+```
+
+属于**列级约束**，即约束直接写在某个字段后面。
+
+也可以写成表级约束：
+
+```sql
+CREATE TABLE t_student (
+    no INT,
+    name VARCHAR(255),
+    email VARCHAR(255),
+    UNIQUE (email)
+);
+```
+
+如果只限制一个字段，两种写法的核心作用相同。
+
+#### `UNIQUE` 与 `NULL`
+
+唯一性约束虽然禁止普通值重复，但**允许出现多个 `NULL`**。
+
+例如：
+
+```sql
+CREATE TABLE t_student (
+    id INT,
+    email VARCHAR(255) UNIQUE
+);
+```
+
+可以插入：
+
+```sql
+INSERT INTO t_student VALUES (1, NULL);
+INSERT INTO t_student VALUES (2, NULL);
+```
+
+两条记录都可以存在。
+
+原因在于 SQL 中的 `NULL` 表示“未知或没有值”，不同的 `NULL` 不会像普通确定值那样被认定为彼此相等。
+
+因此，如果某字段要求：
+
+1. 不能为空；
+2. 不能重复；
+
+就应该同时使用：
+
+```sql
+NOT NULL UNIQUE
+```
+
+例如：
+
+```sql
+email VARCHAR(255) NOT NULL UNIQUE
+```
+
+> 结论：`UNIQUE` 负责“不能重复”，`NOT NULL` 负责“不能为空”。如果业务同时要求这两个条件，就需要同时设置两个约束。
+
+#### 联合唯一
+
+表级约束最大的用途之一，是可以对**多个字段组成的整体**设置唯一性。
+
+例如：
+
+```sql
+CREATE TABLE t_student (
+    no INT,
+    name VARCHAR(255),
+    email VARCHAR(255),
+    UNIQUE (name, email)
+);
+```
+
+这里并不是要求：
+
+```text
+name 单独不能重复
+email 单独不能重复
+```
+
+而是要求：
+
+```text
+name + email
+```
+
+这个**字段组合不能重复**。
+
+例如已有：
+
+```text
+name    email
+Jack    jack@test.com
+```
+
+仍然可以存在：
+
+```text
+Jack    jack2@test.com
+```
+
+也可以存在：
+
+```text
+Tom     jack@test.com
+```
+
+但不能再次出现：
+
+```text
+Jack    jack@test.com
+```
+
+因此，联合唯一限制的是**多个字段组合后的整体唯一性**。
+
+#### 为约束命名
+
+创建约束时可以使用 `CONSTRAINT` 为约束指定名称：
+
+```sql
+CREATE TABLE t_student (
+    no INT,
+    name VARCHAR(255),
+    email VARCHAR(255),
+    CONSTRAINT t_student_name_email_unique
+        UNIQUE (name, email)
+);
+```
+
+其中：
+
+```text
+t_student_name_email_unique
+```
+
+就是约束名称。
+
+为约束设置具有明确含义的名称，有利于以后查看、维护和删除约束。
+
+---
+
+### 约束信息的存储
+
+MySQL 提供了系统数据库：
+
+```text
+information_schema
+```
+
+`information_schema` 中保存或提供大量数据库**元数据（Metadata）**，即用于描述数据库自身结构的信息，例如：
+
+- 有哪些数据库；
+- 有哪些表；
+- 表中有哪些字段；
+- 存在哪些约束；
+- 存在哪些索引。
+
+其中：
+
+```text
+TABLE_CONSTRAINTS
+```
+
+用于查看表上的主要约束信息。
+
+例如：
+
+```sql
+SELECT *
+FROM information_schema.TABLE_CONSTRAINTS;
+```
+
+如果只查看当前数据库中 `t_student` 表的约束，可以进一步添加条件：
+
+```sql
+SELECT
+    CONSTRAINT_NAME,
+    CONSTRAINT_TYPE,
+    TABLE_NAME
+FROM information_schema.TABLE_CONSTRAINTS
+WHERE TABLE_SCHEMA = DATABASE()
+  AND TABLE_NAME = 't_student';
+```
+
+常见的 `CONSTRAINT_TYPE` 包括：
+
+```text
+PRIMARY KEY
+UNIQUE
+FOREIGN KEY
+CHECK
+```
+
+> 注意：`NOT NULL` 更准确地说属于字段本身的非空属性，并不会作为普通的 `TABLE_CONSTRAINTS` 记录出现。因此不能简单理解为“所有约束都保存在 `TABLE_CONSTRAINTS` 中”。
+
+MySQL 中自己创建并用于保存业务数据的表通常称为**用户表**；数据库管理系统自身还会维护大量用于描述数据库结构和运行状态的系统信息。
+
+---
+
+### 主键约束
+
+`PRIMARY KEY` 表示**主键约束**，简称 **PK（Primary Key）**。
+
+学习主键时需要区分三个相关概念：
+
+- **主键约束**：`PRIMARY KEY` 这一约束规则；
+- **主键字段**：被设置为主键的字段；
+- **主键值**：某条记录在主键字段中实际保存的值。
+
+主键最重要的作用是：
+
+**唯一标识表中的每一条记录。**
+
+例如：
+
+```text
+id   name   age
+1    Jack   20
+2    Jack   20
+```
+
+虽然两条记录的 `name` 和 `age` 完全相同，但：
+
+```text
+id = 1
+id = 2
+```
+
+不同，因此数据库可以明确区分它们是两条不同的记录。
+
+主键具有两个核心要求：
+
+1. **不能为 `NULL`；**
+2. **不能重复。**
+
+因此可以把主键理解为同时具有：
+
+```text
+NOT NULL + UNIQUE
+```
+
+的核心特征，但主键除了保证非空和唯一以外，还承担着**标识整条记录**的作用。
+
+一张表只能定义**一个主键约束**，但这个主键可以由一个字段组成，也可以由多个字段共同组成。
+
+#### 单一主键
+
+只使用一个字段作为主键，称为**单一主键**。
+
+例如：
+
+```sql
+CREATE TABLE t_student (
+    id BIGINT PRIMARY KEY,
+    sno VARCHAR(255) UNIQUE,
+    name VARCHAR(255) NOT NULL
+);
+```
+
+这里：
+
+```sql
+id BIGINT PRIMARY KEY
+```
+
+表示 `id` 是主键。
+
+也可以使用表级约束：
+
+```sql
+CREATE TABLE t_student (
+    id BIGINT,
+    sno VARCHAR(255) UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    PRIMARY KEY (id)
+);
+```
+
+对于单字段主键，两种写法的核心作用相同。
+
+实际设计中，使用独立的单字段 `id` 作为主键是一种非常常见且便于维护的方式。
+
+#### 复合主键
+
+如果由两个或更多字段共同组成主键，则称为**复合主键或联合主键**。
+
+例如：
+
+```sql
+CREATE TABLE t_user_role (
+    user_id BIGINT,
+    role_id BIGINT,
+    PRIMARY KEY (user_id, role_id)
+);
+```
+
+此时真正具有唯一性的是：
+
+```text
+user_id + role_id
+```
+
+这个组合。
+
+例如可以存在：
+
+```text
+user_id   role_id
+1         1
+1         2
+2         1
+```
+
+但不能再次插入：
+
+```text
+1         1
+```
+
+复合主键中的每一个组成字段都不能为 `NULL`。
+
+> 补充：复合主键本身**并不违反数据库设计范式**。某些业务关系本身就是由多个字段共同唯一确定的，使用复合主键是合法的数据库设计方式。不过在一般业务表中，独立的单字段主键通常更加简单，因此较为常见。
+
+#### 自然键与代理键
+
+按照主键值是否直接来源于业务数据，可以进一步区分为：
+
+**自然键（Natural Key）**：主键本身来自业务数据，并具有业务含义。例如使用身份证号码、某些业务编号作为唯一标识。
+
+**代理键（Surrogate Key）**：专门为数据库记录生成、不承担具体业务含义的标识，例如：
+
+```text
+1
+2
+3
+4
+```
+
+对应的：
+
+```sql
+id BIGINT PRIMARY KEY
+```
+
+通常就是代理键。
+
+例如：
+
+```sql
+CREATE TABLE t_student (
+    id BIGINT PRIMARY KEY,
+    sno VARCHAR(32) UNIQUE,
+    name VARCHAR(255)
+);
+```
+
+其中：
+
+- `id`：数据库内部使用的代理主键；
+- `sno`：具有业务含义的学生编号。
+
+实际开发中通常更常见的设计是：**使用稳定、无业务含义的代理键作为主键，再通过 `UNIQUE` 等约束保证业务字段自身的唯一性。**
+
+原因在于业务数据可能发生变化。例如某个业务编号规则发生调整，如果直接把它作为大量表之间关联的主键，修改时可能影响很多关联数据；代理主键通常不会受到业务规则变化的影响。
+
+> 注意：“与业务无关、单纯用于标识记录的数字主键”更准确的名称是**代理键或替代键（Surrogate Key）**，而不是自然键。自然键通常恰恰来自真实业务数据。
+
+#### 表是否必须有主键
+
+MySQL 语法并没有规定每张表都必须显式创建主键，因此下面的表在语法上也是允许的：
+
+```sql
+CREATE TABLE t_test (
+    name VARCHAR(255)
+);
+```
+
+但是对于绝大多数需要长期维护的业务表，通常都应该设计能够**稳定、唯一标识每一条记录**的主键。
+
+如果没有这样的标识，在修改、删除、关联某一条具体记录时就可能变得困难。
+
+因此，实际数据库设计中通常遵循：
+
+**业务表原则上应设计合适的主键，但“没有主键的表就是无效表”并不是 MySQL 的语法规则。**
+
+#### 主键自增
+
+如果主键使用整数类型，MySQL 可以通过：
+
+```sql
+AUTO_INCREMENT
+```
+
+自动生成递增的编号。
+
+例如：
+
+```sql
+CREATE TABLE t_vip (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255)
+);
+```
+
+插入数据时不需要手动提供 `id`：
+
+```sql
+INSERT INTO t_vip (name)
+VALUES ('Jack');
+```
+
+再次插入：
+
+```sql
+INSERT INTO t_vip (name)
+VALUES ('Lucy');
+```
+
+正常情况下可以得到类似：
+
+```text
+id   name
+1    Jack
+2    Lucy
+```
+
+默认情况下，自增值通常从 `1` 开始，每次向后分配新的值。
+
+`AUTO_INCREMENT` 使程序不需要自己维护普通的递增主键编号，因此经常与代理主键结合：
+
+```sql
+id BIGINT PRIMARY KEY AUTO_INCREMENT
+```
+
+但必须注意：**自增主键只保证自动生成新的编号，并不保证编号永远连续。**
+
+例如某次插入过程中已经申请了一个自增值，但随后：
+
+- SQL 执行失败；
+- 事务发生回滚；
+- 并发插入；
+- 批量插入；
+
+都可能使某些已经分配的编号不再被使用。
+
+因此可能出现：
+
+```text
+1
+2
+4
+5
+```
+
+中间缺少：
+
+```text
+3
+```
+
+这是正常现象。
+
+> 结论：主键的核心作用是**唯一标识记录**，而不是生成连续数字。自增主键出现断号通常没有任何问题，也不应该把自增主键当作必须连续的业务序号。
+
+---
+
+### 外键约束
+
+`FOREIGN KEY` 表示**外键约束**，简称 **FK（Foreign Key）**。
+
+与主键类似，也可以区分：
+
+- **外键约束**：限制字段引用关系的规则；
+- **外键字段**：添加了外键约束的字段；
+- **外键值**：某条记录实际保存的引用值。
+
+外键主要用于维护**不同表之间的引用关系和数据一致性**。
+
+#### 为什么需要外键
+
+假设需要保存学生和学校信息。
+
+一种简单方式是全部放在一张表中：
+
+```text
+student_id   student_name   school_id   school_name
+1            Jack           1001        第一中学
+2            Lucy           1001        第一中学
+3            Tom            1001        第一中学
+```
+
+这样查询学生及其学校信息非常直接，不需要进行表连接。
+
+但问题也很明显：
+
+```text
+第一中学
+```
+
+被重复保存了很多次。
+
+如果一所学校有几万名学生，学校名称、学校地址等信息就可能被重复保存几万次，不仅造成数据冗余，而且修改学校信息时还需要修改大量记录。
+
+因此更合理的设计通常是拆成两张表。
+
+学校表：
+
+```text
+t_school
+
+sno    sname
+1001   第一中学
+1002   第二中学
+```
+
+学生表：
+
+```text
+t_student
+
+id    name    sno
+1     Jack    1001
+2     Lucy    1001
+3     Tom     1002
+```
+
+其中：
+
+```text
+t_student.sno
+```
+
+保存学生所属学校的编号，并引用：
+
+```text
+t_school.sno
+```
+
+这样学校信息只需要保存一次。
+
+但拆成两张表后又产生一个问题：如果没有任何限制，完全可以执行：
+
+```sql
+INSERT INTO t_student
+VALUES (4, 'Amy', 9999);
+```
+
+即使学校表根本不存在编号为 `9999` 的学校，数据库也可能接受这条数据。
+
+此时就可以通过外键规定：
+
+**学生表中的学校编号必须来自学校表中真实存在的学校编号。**
+
+#### 创建外键
+
+首先创建学校表：
+
+```sql
+CREATE TABLE t_school (
+    sno INT PRIMARY KEY,
+    sname VARCHAR(255)
+);
+```
+
+再创建学生表：
+
+```sql
+CREATE TABLE t_student (
+    id INT PRIMARY KEY,
+    name VARCHAR(255),
+    age INT,
+    sno INT,
+    CONSTRAINT t_student_sno_fk
+        FOREIGN KEY (sno)
+        REFERENCES t_school (sno)
+);
+```
+
+外键部分：
+
+```sql
+CONSTRAINT t_student_sno_fk
+    FOREIGN KEY (sno)
+    REFERENCES t_school (sno)
+```
+
+可以拆开理解：
+
+```text
+CONSTRAINT t_student_sno_fk
+```
+
+为外键约束指定名称。
+
+```text
+FOREIGN KEY (sno)
+```
+
+表示学生表中的 `sno` 是外键字段。
+
+```text
+REFERENCES t_school (sno)
+```
+
+表示这个字段引用：
+
+```text
+t_school.sno
+```
+
+假设学校表只有：
+
+```text
+sno
+1
+2
+```
+
+那么学生表可以插入：
+
+```text
+sno = 1
+sno = 2
+```
+
+但如果外键约束正常生效，则不能随意插入：
+
+```text
+sno = 3
+```
+
+因为父表中不存在该值。
+
+#### 父表与子表
+
+在外键关系中：
+
+- **被引用的表称为父表**；
+- **引用其他表的表称为子表**。
+
+例如：
+
+```text
+t_school  ←  t_student
+   父表        子表
+```
+
+学生依赖学校，因此：
+
+```text
+t_student.sno
+```
+
+引用：
+
+```text
+t_school.sno
+```
+
+操作具有一定顺序。
+
+**创建表时：**
+
+1. 先创建父表；
+2. 再创建子表。
+
+因为创建子表外键时，被引用的父表必须已经存在。
+
+**插入数据时：**
+
+1. 先插入父表数据；
+2. 再插入子表数据。
+
+例如先有学校：
+
+```sql
+INSERT INTO t_school
+VALUES (1, '第一中学');
+```
+
+才能正常插入引用该学校的学生：
+
+```sql
+INSERT INTO t_student
+VALUES (1, 'Jack', 20, 1);
+```
+
+**普通删除数据时，如果没有配置级联规则：**
+
+1. 先处理或删除引用父表记录的子表数据；
+2. 再删除父表数据。
+
+如果学生表中仍然存在：
+
+```text
+sno = 1
+```
+
+却直接删除学校：
+
+```sql
+DELETE FROM t_school
+WHERE sno = 1;
+```
+
+外键通常会阻止这次操作，从而避免出现“学生引用了一个已经不存在的学校”的错误数据。
+
+删除存在外键依赖的表时，同样通常需要先解除子表依赖，再删除父表。
+
+#### 外键引用的字段
+
+外键字段**不要求与父表字段名称相同**。
+
+例如：
+
+```sql
+CREATE TABLE t_school (
+    id INT PRIMARY KEY,
+    sname VARCHAR(255)
+);
+
+CREATE TABLE t_student (
+    id INT PRIMARY KEY,
+    school_id INT,
+    FOREIGN KEY (school_id)
+        REFERENCES t_school (id)
+);
+```
+
+这里：
+
+```text
+t_student.school_id
+```
+
+引用：
+
+```text
+t_school.id
+```
+
+字段名称虽然不同，但引用关系仍然成立。
+
+从规范设计和可移植性角度，父表中被引用的字段通常应当具有能够唯一确定记录的能力，因此最常见的是引用：
+
+```text
+PRIMARY KEY
+```
+
+或者：
+
+```text
+UNIQUE
+```
+
+字段。
+
+例如：
+
+```sql
+CREATE TABLE t_school (
+    id INT PRIMARY KEY,
+    school_code VARCHAR(32) UNIQUE,
+    sname VARCHAR(255)
+);
+```
+
+既可以选择稳定的主键 `id` 建立关系，也可以在确有需要时引用具有唯一性的 `school_code`。
+
+> 注意：不同 MySQL 版本和存储引擎对“引用非唯一索引字段”存在一些历史扩展行为，但这种方式不具有良好的通用性。学习和实际设计时，应优先让外键引用父表的**主键或唯一键**，不要依赖非唯一字段建立外键关系。
+
+外键两侧字段的数据类型还应当能够兼容。例如父表为：
+
+```sql
+sno INT
+```
+
+子表一般也应使用：
+
+```sql
+sno INT
+```
+
+尤其对于整数类型，还需要注意有符号和无符号等属性是否匹配。
+
+#### 单一外键与复合外键
+
+一个字段作为外键，称为**单一外键**。
+
+例如：
+
+```sql
+FOREIGN KEY (school_id)
+REFERENCES t_school (id)
+```
+
+多个字段共同组成外键，称为**复合外键**：
+
+```sql
+FOREIGN KEY (字段1, 字段2)
+REFERENCES 父表 (字段1, 字段2)
+```
+
+复合外键适用于父表本身使用联合键标识记录等情况，普通业务中相对少见。
+
+---
+
+### 修改外键约束
+
+表创建完成后，同样可以通过 `ALTER TABLE` 添加外键。
+
+例如：
+
+```sql
+ALTER TABLE t_student
+ADD CONSTRAINT t_student_sno_fk
+FOREIGN KEY (sno)
+REFERENCES t_school (sno);
+```
+
+删除外键时需要使用外键约束的名称：
+
+```sql
+ALTER TABLE t_student
+DROP FOREIGN KEY t_student_sno_fk;
+```
+
+因此给外键指定明确的约束名称，可以提高后续维护的便利性。
+
+> 易错点：修改表结构使用的是 `ALTER TABLE`，不是 `ALERT TABLE`。`ALTER` 表示修改，这是 SQL 中正确的关键字。
+
+---
+
+### 外键约束未生效的排查
+
+假设：
+
+```text
+t_school.sno
+```
+
+中只有：
+
+```text
+1
+2
+```
+
+按照下面的外键定义：
+
+```sql
+FOREIGN KEY (sno)
+REFERENCES t_school (sno)
+```
+
+正常情况下，向学生表插入：
+
+```text
+sno = 3
+```
+
+应该失败。
+
+如果却能够成功插入，说明需要确认外键约束是否真的处于生效状态。
+
+首先查看实际建表语句：
+
+```sql
+SHOW CREATE TABLE t_student;
+```
+
+检查结果中是否真正存在类似：
+
+```sql
+CONSTRAINT `t_student_sno_fk`
+FOREIGN KEY (`sno`)
+REFERENCES `t_school` (`sno`)
+```
+
+如果没有出现，说明外键可能并没有成功创建。
+
+其次可以检查：
+
+```sql
+SELECT @@foreign_key_checks;
+```
+
+正常情况下：
+
+```text
+1
+```
+
+表示开启外键检查。
+
+如果为：
+
+```text
+0
+```
+
+则外键检查被关闭。
+
+可以重新开启：
+
+```sql
+SET FOREIGN_KEY_CHECKS = 1;
+```
+
+还应确认表使用了支持外键的存储引擎。MySQL 中最常用的 `InnoDB` 支持外键，可以通过：
+
+```sql
+SHOW TABLE STATUS LIKE 't_student';
+```
+
+或者：
+
+```sql
+SHOW CREATE TABLE t_student;
+```
+
+查看表的存储引擎。
+
+> 注意：如果在 `FOREIGN_KEY_CHECKS = 0` 时已经写入了违反外键关系的数据，之后重新设置为 `1`，并不意味着 MySQL 一定会自动把此前所有历史数据重新检查并修复。因此关闭外键检查应谨慎使用。
+
+---
+
+### 外键的级联操作
+
+默认情况下，如果父表中的某条数据仍被子表引用，直接删除或修改父表的关键值通常会受到外键约束限制。
+
+MySQL 可以通过外键的**级联操作**定义父表数据变化时，子表应该如何处理。
+
+常见方式包括：
+
+```text
+ON DELETE CASCADE
+ON UPDATE CASCADE
+ON DELETE SET NULL
+```
+
+#### 级联删除
+
+`ON DELETE CASCADE` 表示：
+
+**删除父表记录时，自动删除所有引用该记录的子表数据。**
+
+例如：
+
+```sql
+CREATE TABLE t_student (
+    id INT PRIMARY KEY,
+    name VARCHAR(255),
+    age INT,
+    sno INT,
+    CONSTRAINT t_student_sno_fk
+        FOREIGN KEY (sno)
+        REFERENCES t_school (sno)
+        ON DELETE CASCADE
+);
+```
+
+假设：
+
+```text
+t_school
+
+sno
+1
+2
+```
+
+学生表：
+
+```text
+id   name   sno
+1    Jack   1
+2    Lucy   1
+3    Tom    2
+```
+
+执行：
+
+```sql
+DELETE FROM t_school
+WHERE sno = 1;
+```
+
+由于设置了：
+
+```sql
+ON DELETE CASCADE
+```
+
+引用学校 `1` 的：
+
+```text
+Jack
+Lucy
+```
+
+也会被自动删除。
+
+> 注意：级联删除可能一次性影响大量子表数据，因此必须明确业务含义后再使用。尤其是数据层级较深时，一个父表删除操作可能继续影响更多关联数据。
+
+#### 级联更新
+
+`ON UPDATE CASCADE` 表示：
+
+**当父表中被引用的键值发生修改时，子表对应的外键值自动同步修改。**
+
+例如：
+
+```sql
+CREATE TABLE t_student (
+    id INT PRIMARY KEY,
+    name VARCHAR(255),
+    age INT,
+    sno INT,
+    CONSTRAINT t_student_sno_fk
+        FOREIGN KEY (sno)
+        REFERENCES t_school (sno)
+        ON UPDATE CASCADE
+);
+```
+
+假设学生原来引用：
+
+```text
+sno = 1
+```
+
+父表将学校编号：
+
+```text
+1
+```
+
+修改为：
+
+```text
+1001
+```
+
+相关学生的外键值也会同步变为：
+
+```text
+1001
+```
+
+从而继续保持引用关系。
+
+#### 级联置空
+
+`ON DELETE SET NULL` 表示：
+
+**删除父表记录时，不删除子表记录，而是将相应的外键字段设置为 `NULL`。**
+
+例如：
+
+```sql
+CREATE TABLE t_student (
+    id INT PRIMARY KEY,
+    name VARCHAR(255),
+    age INT,
+    sno INT,
+    CONSTRAINT t_student_sno_fk
+        FOREIGN KEY (sno)
+        REFERENCES t_school (sno)
+        ON DELETE SET NULL
+);
+```
+
+假设：
+
+```text
+id   name   sno
+1    Jack   1
+```
+
+删除学校：
+
+```sql
+DELETE FROM t_school
+WHERE sno = 1;
+```
+
+学生记录仍然存在：
+
+```text
+id   name   sno
+1    Jack   NULL
+```
+
+这种方式适合父表记录消失以后，子表记录仍然需要保留，但它们之间的关联可以解除的场景。
+
+> 易错点：使用 `ON DELETE SET NULL` 时，子表的外键字段必须允许为 `NULL`。如果字段定义为 `NOT NULL`，就无法在父表删除后将其设置成 `NULL`。
+
+三种常见级联方式可以概括为：
+
+| 外键动作             | 父表发生的变化       | 子表的处理方式            |
+| -------------------- | -------------------- | ------------------------- |
+| `ON DELETE CASCADE`  | 删除父表记录         | 自动删除对应子表记录      |
+| `ON UPDATE CASCADE`  | 修改父表被引用的键值 | 自动修改子表外键值        |
+| `ON DELETE SET NULL` | 删除父表记录         | 子表保留，外键变为 `NULL` |
+
+---
+
+### 是否应该使用外键约束
+
+外键能够直接由数据库保证**引用完整性**，可以有效避免：
+
+```text
+子表引用不存在的父表数据
+```
+
+这类错误，因此在单体应用、单数据库系统以及对数据一致性要求较高的系统中具有很实际的价值。
+
+但在一些大型系统中，也存在不直接使用数据库外键，而是在程序中维护表之间关系的设计。例如：
+
+- 数据库进行了分库分表；
+- 两张逻辑关联的表位于不同数据库；
+- 微服务之间不能依赖数据库级外键；
+- 大规模数据迁移和表结构变更需要降低表之间的强耦合；
+- 系统希望由应用程序统一维护引用关系。
+
+这种情况下，即使数据库中没有：
+
+```sql
+FOREIGN KEY
+```
+
+程序仍然必须保证类似：
+
+```text
+student.school_id
+```
+
+一定对应真实存在的学校。
+
+> 结论：不能简单理解为“实际开发一定不用外键，因为外键效率低”。是否使用外键属于数据库设计和系统架构选择。**数据库外键的优势是直接保证引用完整性；不使用外键则需要应用程序承担相应的数据一致性责任。** 对于当前阶段，首先应掌握外键能够解决什么问题、父表和子表如何建立关系以及各种级联规则的含义。
+
+## 数据库设计三范式
+
+**数据库设计范式（Normal Form）是一组用于规范关系型数据库表结构的设计原则，主要目的是减少数据冗余，避免插入、修改和删除数据时出现异常，并提高数据的一致性和可维护性。**
+
+常见的数据库设计三范式包括：
+
+1. 第一范式（1NF）：字段应保持原子性。
+2. 第二范式（2NF）：非主属性不能只依赖复合键的一部分。
+3. 第三范式（3NF）：非主属性之间不应形成对键的传递依赖。
+
+三者具有逐级递进关系：**满足第三范式必须先满足第二范式，满足第二范式又必须先满足第一范式。**
+
+> 补充：范式讨论中的“依赖”本质上是**函数依赖**，即某个字段或字段组合能够唯一确定另一个字段。当前阶段主要理解“完全依赖、部分依赖、传递依赖”的含义即可。
+
+---
+
+### 第一范式
+
+**第一范式（First Normal Form，1NF）要求表中的每个字段都保存不可再按照当前业务意义继续拆分的单一值，即字段具有原子性。**
+
+例如，下面的设计把手机号和邮箱都放在 `contact` 字段中：
+
+| id   | name | contact                    |
+| ---- | ---- | -------------------------- |
+| 1    | Jack | 13800000000, jack@test.com |
+
+其中 `contact` 实际同时保存了手机号和邮箱。如果后续需要单独查询手机号、根据邮箱查询学生、单独修改手机号，或者分别对手机号和邮箱添加约束，处理起来都会比较麻烦。
+
+更合理的方式是将其拆分为独立字段：
+
+| id   | name | phone       | email         |
+| ---- | ---- | ----------- | ------------- |
+| 1    | Jack | 13800000000 | jack@test.com |
+
+对应的表结构可以设计为：
+
+```sql
+CREATE TABLE t_student (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR(255),
+    phone VARCHAR(20),
+    email VARCHAR(255)
+);
+```
+
+此时 `phone` 和 `email` 分别表示一个明确的数据项，更便于查询、修改和添加约束。
+
+所谓“原子性”需要结合实际业务理解。例如，地址 `安徽省合肥市蜀山区……` 如果系统始终只需要作为完整文本展示，那么可以直接保存为一个 `address` 字段；如果业务经常需要按照省、市、区、详细地址分别查询和统计，则应该进一步拆分。
+
+> 易错点：严格来说，第一范式的核心要求是字段值具有原子性，**“必须有主键”并不是第一范式本身的定义**。不过实际业务表通常都应该设计能够唯一标识记录的主键，这是一项非常重要的数据库设计原则。
+
+---
+
+### 第二范式
+
+**第二范式（Second Normal Form，2NF）建立在第一范式的基础上，要求所有非主属性都必须完全依赖候选键，不能只依赖复合键中的一部分。**
+
+这里最需要理解的是**部分依赖**。
+
+假设需要记录“学生选择老师”的关系，一名学生可以选择多名老师，一名老师也可以被多名学生选择：
+
+| student_id | teacher_id | student_name | teacher_name |
+| ---------- | ---------- | ------------ | ------------ |
+| 1          | 101        | Jack         | Zhang        |
+| 1          | 102        | Jack         | Li           |
+| 2          | 101        | Lucy         | Zhang        |
+
+假设一条关系由 `student_id + teacher_id` 共同唯一确定，因此使用复合主键：
+
+```sql
+PRIMARY KEY (student_id, teacher_id)
+```
+
+此时，`student_name` 实际只由 `student_id` 就能够确定，并不依赖整个 `student_id + teacher_id`；同理，`teacher_name` 只依赖 `teacher_id`。
+
+因此产生了部分依赖：
+
+- `student_id → student_name`
+- `teacher_id → teacher_name`
+- `student_id + teacher_id` 才共同确定一条“学生选择老师”的关系
+
+这种设计会产生明显的数据冗余。例如学生 `Jack` 选择了 10 名老师，那么 `Jack` 这个姓名就可能重复保存 10 次。
+
+更合理的方式是拆成三张表。
+
+学生表：
+
+| student_id | student_name |
+| ---------- | ------------ |
+| 1          | Jack         |
+| 2          | Lucy         |
+
+老师表：
+
+| teacher_id | teacher_name |
+| ---------- | ------------ |
+| 101        | Zhang        |
+| 102        | Li           |
+
+学生与老师关系表：
+
+| student_id | teacher_id |
+| ---------- | ---------- |
+| 1          | 101        |
+| 1          | 102        |
+| 2          | 101        |
+
+例如：
+
+```sql
+CREATE TABLE t_student (
+    student_id BIGINT PRIMARY KEY,
+    student_name VARCHAR(255)
+);
+
+CREATE TABLE t_teacher (
+    teacher_id BIGINT PRIMARY KEY,
+    teacher_name VARCHAR(255)
+);
+
+CREATE TABLE t_student_teacher (
+    student_id BIGINT,
+    teacher_id BIGINT,
+    PRIMARY KEY (student_id, teacher_id)
+);
+```
+
+这样，学生信息只保存在学生表，老师信息只保存在老师表，中间表只负责保存学生和老师之间的关系，从而避免重复保存姓名。
+
+> 结论：第二范式主要解决的是**复合键引起的部分依赖问题**。如果一张表使用单字段候选键作为唯一标识，就不会产生“只依赖复合键一部分”的问题，因此第二范式在复合键场景中尤其需要关注。
+
+---
+
+### 第三范式
+
+**第三范式（Third Normal Form，3NF）建立在第二范式的基础上，要求非主属性不能通过另一个非主属性间接依赖候选键，即应避免非主属性之间形成传递依赖。**
+
+例如，一张学生表同时保存学生和班级信息：
+
+| student_id | student_name | class_id | class_name |
+| ---------- | ------------ | -------- | ---------- |
+| 1          | Jack         | 101      | Java一班   |
+| 2          | Lucy         | 101      | Java一班   |
+| 3          | Tom          | 102      | Java二班   |
+
+其中存在 `student_id → class_id`，同时又存在 `class_id → class_name`，因此进一步形成 `student_id → class_id → class_name`。
+
+也就是说，`class_name` 并不是直接由学生的唯一标识决定，而是先通过 `class_id` 再确定，这就是**传递依赖**。
+
+这种设计会产生班级信息冗余。例如一个班有 50 名学生，那么 `Java一班` 可能需要重复保存 50 次。如果班级名称发生变化，还需要同时修改这 50 条学生记录，一旦漏改某一条，就会产生数据不一致。
+
+更合理的方式是拆成学生表和班级表。
+
+班级表：
+
+| class_id | class_name |
+| -------- | ---------- |
+| 101      | Java一班   |
+| 102      | Java二班   |
+
+学生表：
+
+| student_id | student_name | class_id |
+| ---------- | ------------ | -------- |
+| 1          | Jack         | 101      |
+| 2          | Lucy         | 101      |
+| 3          | Tom          | 102      |
+
+对应表结构：
+
+```sql
+CREATE TABLE t_class (
+    class_id BIGINT PRIMARY KEY,
+    class_name VARCHAR(255)
+);
+
+CREATE TABLE t_student (
+    student_id BIGINT PRIMARY KEY,
+    student_name VARCHAR(255),
+    class_id BIGINT
+);
+```
+
+此时，学生表只保存学生自身的信息以及所属班级编号，班级名称等班级自身的信息只保存一次，根据 `class_id` 再关联查询对应班级即可。
+
+三范式可以概括为：
+
+| 范式     | 核心要求                         | 主要避免的问题             |
+| -------- | -------------------------------- | -------------------------- |
+| 第一范式 | 字段具有原子性                   | 一个字段中混合多个独立数据 |
+| 第二范式 | 非主属性完全依赖整个键           | 部分依赖                   |
+| 第三范式 | 非主属性不通过其他非主属性依赖键 | 传递依赖                   |
+
+> 结论：三范式的核心目标不是单纯“把表拆得越多越好”，而是**让每一类数据尽量只在合适的位置保存一次，从而减少冗余和数据不一致问题。**
+
+---
+
+### 范式与实际开发
+
+数据库设计通常应优先遵循规范化原则，但实际系统并不一定机械地追求最高程度的范式。
+
+某些查询频率极高的业务中，如果严格拆表，就可能需要频繁进行多表 `JOIN`。在特定场景下，为了减少复杂查询、提高读取效率，可能会**有意识地保存少量重复数据**。这种做法称为**反范式设计（Denormalization）**。
+
+例如，订单系统中即使商品表已经保存了商品名称和当前价格，订单创建时仍可能同时保存 `商品ID`、`商品名称` 和 `商品成交价格`。这是因为订单需要保留交易发生时的历史快照，不能因为商品后来改名或改价，就影响已经生成的历史订单。
+
+因此，不能简单认为存在重复字段就一定属于错误设计。
+
+数据库设计通常需要综合考虑：
+
+- 数据一致性；
+- 数据冗余；
+- 查询性能；
+- 修改成本；
+- 业务语义；
+- 数据规模；
+- 系统架构。
+
+> 注意：实际开发中可以为了明确的业务或性能需求进行反范式设计，但应当是**经过分析后的有意冗余**，而不是因为表结构设计混乱而产生无意义重复。通常应先保证设计合理，再根据真实需求和性能测试决定是否使用空间换取查询速度。
+
+---
+
+## 表关系设计
+
+在关系型数据库中，不同实体之间经常存在关联。常见关系主要包括**一对多、多对多和一对一**。
+
+表关系设计的核心问题是：**外键应该保存在哪张表中，以及是否需要额外建立关系表。**
+
+---
+
+### 一对多
+
+**一对多（One-to-Many）表示一条父表记录可以对应多条子表记录，而一条子表记录通常只对应一条父表记录。**
+
+例如，一个班级可以有多个学生，而一个学生通常只属于一个班级，即“班级 1 对多 学生”。
+
+设计原则可以记为：**一对多，两张表，在“多”的一方保存外键。**
+
+例如班级表：
+
+```sql
+CREATE TABLE t_class (
+    id BIGINT PRIMARY KEY,
+    class_name VARCHAR(255)
+);
+```
+
+学生表：
+
+```sql
+CREATE TABLE t_student (
+    id BIGINT PRIMARY KEY,
+    student_name VARCHAR(255),
+    class_id BIGINT,
+    CONSTRAINT t_student_class_fk
+        FOREIGN KEY (class_id)
+        REFERENCES t_class (id)
+);
+```
+
+其中 `t_student.class_id` 保存学生所属班级，因此外键位于“多”的一方，也就是学生表。
+
+例如：
+
+| id   | student_name | class_id |
+| ---- | ------------ | -------- |
+| 1    | Jack         | 1        |
+| 2    | Lucy         | 1        |
+| 3    | Tom          | 1        |
+
+三名学生都通过 `class_id = 1` 关联同一个班级。
+
+> 结论：一对多关系通常采用**两张表，并在多的一方保存指向一的一方的外键**。
+
+---
+
+### 多对多
+
+**多对多（Many-to-Many）表示两边的一条记录都可以与另一边的多条记录建立关系。**
+
+例如，一个学生可以选择多门课程，一门课程也可以被多个学生选择，即“学生 多对多 课程”。
+
+这种关系不能只通过在其中一张表增加一个普通外键完整表示，因此通常需要建立**中间关系表**。
+
+设计原则可以记为：**多对多，三张表，中间关系表保存两侧外键。**
+
+学生表：
+
+```sql
+CREATE TABLE t_student (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR(255)
+);
+```
+
+课程表：
+
+```sql
+CREATE TABLE t_course (
+    id BIGINT PRIMARY KEY,
+    course_name VARCHAR(255)
+);
+```
+
+学生课程关系表：
+
+```sql
+CREATE TABLE t_student_course (
+    student_id BIGINT,
+    course_id BIGINT,
+    PRIMARY KEY (student_id, course_id),
+    CONSTRAINT t_sc_student_fk
+        FOREIGN KEY (student_id)
+        REFERENCES t_student (id),
+    CONSTRAINT t_sc_course_fk
+        FOREIGN KEY (course_id)
+        REFERENCES t_course (id)
+);
+```
+
+例如：
+
+| student_id | course_id |
+| ---------- | --------- |
+| 1          | 101       |
+| 1          | 102       |
+| 2          | 101       |
+
+表示学生 `1` 选择了课程 `101` 和 `102`，学生 `2` 选择了课程 `101`。
+
+关系表还可以保存**属于这段关系本身的数据**。例如选课关系可能还包含成绩：
+
+```sql
+CREATE TABLE t_student_course (
+    student_id BIGINT,
+    course_id BIGINT,
+    score DECIMAL(5, 2),
+    PRIMARY KEY (student_id, course_id)
+);
+```
+
+其中 `score` 属于“某个学生选择某门课程”这一关系，而不是单纯属于学生或课程自身。
+
+> 结论：多对多关系通常通过**第三张中间关系表**拆解为两个一对多关系。
+
+---
+
+### 一对一
+
+**一对一（One-to-One）表示一条记录最多对应另一张表中的一条记录，反过来也只能对应一条。**
+
+例如，一个用户对应一份用户详细资料，一份用户详细资料也只属于一个用户。
+
+一对一关系看起来似乎可以直接合并成一张表，但实际开发中仍然可能需要拆表，例如：
+
+- 主表字段过多，希望进行垂直拆分；
+- 某些扩展字段很少使用，不希望每次查询主表都读取；
+- 某些敏感信息希望单独管理；
+- 扩展信息属于可选内容，大量记录可能并不存在；
+- 两部分数据的生命周期或访问权限不同。
+
+常见的一对一设计主要有**共享主键**和**唯一外键**两种方式。
+
+#### 共享主键
+
+共享主键是指子表的主键同时也是指向父表的外键。
+
+用户表：
+
+```sql
+CREATE TABLE t_user (
+    id BIGINT PRIMARY KEY,
+    username VARCHAR(255)
+);
+```
+
+用户详情表：
+
+```sql
+CREATE TABLE t_user_profile (
+    user_id BIGINT PRIMARY KEY,
+    address VARCHAR(255),
+    phone VARCHAR(20),
+    CONSTRAINT t_profile_user_fk
+        FOREIGN KEY (user_id)
+        REFERENCES t_user (id)
+);
+```
+
+其中 `t_user_profile.user_id` 同时承担 `PRIMARY KEY` 和 `FOREIGN KEY` 两个作用。
+
+因为 `user_id` 本身是主键，所以不能重复，从而自然保证一个用户最多对应一条详情记录。
+
+这种方式称为**主键共享**。
+
+#### 唯一外键
+
+另一种方式是让子表拥有自己的独立主键，同时对外键增加 `UNIQUE` 约束。
+
+例如：
+
+```sql
+CREATE TABLE t_user (
+    id BIGINT PRIMARY KEY,
+    username VARCHAR(255)
+);
+```
+
+详情表：
+
+```sql
+CREATE TABLE t_user_profile (
+    id BIGINT PRIMARY KEY,
+    user_id BIGINT UNIQUE,
+    address VARCHAR(255),
+    phone VARCHAR(20),
+    CONSTRAINT t_profile_user_fk
+        FOREIGN KEY (user_id)
+        REFERENCES t_user (id)
+);
+```
+
+其中 `user_id` 既作为外键引用用户表，又受到 `UNIQUE` 限制。
+
+如果没有 `UNIQUE`，同一个 `user_id` 理论上可以在详情表中出现多次，此时关系就会变成一对多；增加 `UNIQUE` 后，同一个 `user_id` 最多只能出现一次，因此形成一对一关系。
+
+两种方案可以概括为：
+
+| 方案     | 核心设计                            |
+| -------- | ----------------------------------- |
+| 主键共享 | 子表主键同时作为外键                |
+| 唯一外键 | 子表拥有独立主键，外键设置 `UNIQUE` |
+
+> 结论：一对一关系通常用于需要拆表的场景。如果两个实体本质上始终同时存在、字段数量也不多，并且没有权限、性能等拆分需求，那么直接设计为一张表往往更加简单。
+
+---
+
+## 视图
+
+**视图（View）是一张由查询语句定义出来的虚拟表。** 视图本身主要保存的是查询定义，使用视图时可以像查询普通表一样查询它，而实际数据通常来自底层的一个或多个基础表。
+
+例如，存在员工表 `emp` 和部门表 `dept`。如果经常需要查询“员工姓名 + 部门名称”，每次都编写完整的多表查询会比较繁琐，此时就可以创建视图。
+
+---
+
+### 创建视图
+
+视图通过 `SELECT` 查询定义：
+
+```sql
+CREATE VIEW 视图名
+AS
+SELECT ...;
+```
+
+例如：
+
+```sql
+CREATE VIEW v_emp
+AS
+SELECT e.ename, d.dname
+FROM emp e
+JOIN dept d
+    ON e.deptno = d.deptno;
+```
+
+创建完成后，可以像查询普通表一样查询：
+
+```sql
+SELECT * FROM v_emp;
+```
+
+实际上，视图背后对应的是定义它的 `SELECT` 查询。
+
+如果希望在视图已经存在时直接重新定义，可以使用：
+
+```sql
+CREATE OR REPLACE VIEW v_emp
+AS
+SELECT e.ename, d.dname
+FROM emp e
+JOIN dept d
+    ON e.deptno = d.deptno;
+```
+
+`CREATE OR REPLACE VIEW` 表示：视图不存在则创建，视图已经存在则使用新的查询定义替换原视图。
+
+> 注意：视图必须基于查询定义，本质上可以理解为**给一条查询结果提供一个可以重复使用的名字**。
+
+---
+
+### 视图的作用
+
+视图最常见的作用包括**简化复杂查询**和**隐藏底层表结构的部分实现细节**。
+
+#### 简化复杂 SQL
+
+假设系统中很多地方都需要执行：
+
+```sql
+SELECT
+    e.ename,
+    d.dname
+FROM emp e
+JOIN dept d
+    ON e.deptno = d.deptno;
+```
+
+如果每个地方都重复编写多表连接、连接条件和字段选择，不仅代码重复，而且底层 SQL 一旦需要调整，多处代码都可能需要同时修改。
+
+创建视图：
+
+```sql
+CREATE VIEW v_emp
+AS
+SELECT
+    e.ename,
+    d.dname
+FROM emp e
+JOIN dept d
+    ON e.deptno = d.deptno;
+```
+
+以后只需要：
+
+```sql
+SELECT * FROM v_emp;
+```
+
+因此，视图能够对复杂查询进行封装，降低重复 SQL 带来的开发和维护成本。
+
+#### 隐藏底层结构
+
+程序可以直接面向视图：
+
+```sql
+SELECT * FROM v_emp;
+```
+
+而不需要每次都了解数据来自哪些表、表之间如何连接以及底层字段如何组织，因此视图可以在一定程度上**隔离应用程序与底层表结构**。
+
+还可以通过视图只暴露部分字段。例如原表 `t_employee` 中包含 `id`、`name`、`phone`、`salary`、`password` 等字段，如果某些程序只允许查看 `id` 和 `name`，可以创建：
+
+```sql
+CREATE VIEW v_employee_public
+AS
+SELECT id, name
+FROM t_employee;
+```
+
+查询者通过视图只能直接看到被选出的字段，而不需要接触底层表的全部字段。
+
+> 补充：视图可以作为数据库权限控制的一种辅助手段，但真正的数据访问安全还需要结合数据库用户权限、角色等机制共同实现。
+
+---
+
+### 修改视图
+
+可以使用 `ALTER VIEW` 修改已经存在的视图定义。
+
+例如原来的视图只查询员工姓名和部门名称，现在还需要增加部门编号：
+
+```sql
+ALTER VIEW v_emp
+AS
+SELECT
+    e.ename,
+    d.dname,
+    d.deptno
+FROM emp e
+JOIN dept d
+    ON e.deptno = d.deptno;
+```
+
+修改的是**视图定义**，不是直接修改底层表中的业务数据。
+
+也可以使用 `CREATE OR REPLACE VIEW` 重新定义视图。
+
+---
+
+### 删除视图
+
+删除视图使用：
+
+```sql
+DROP VIEW 视图名;
+```
+
+例如：
+
+```sql
+DROP VIEW v_emp;
+```
+
+为了避免视图不存在时报错，可以写成：
+
+```sql
+DROP VIEW IF EXISTS v_emp;
+```
+
+删除视图只会删除**视图本身的定义**，不会删除视图所依赖的基础表及其中的数据。
+
+---
+
+### 通过视图修改数据
+
+某些视图不仅可以查询，还可以执行 `INSERT`、`UPDATE` 和 `DELETE`。
+
+如果视图属于**可更新视图（Updatable View）**，那么对视图数据的修改最终会反映到底层基础表。
+
+例如：
+
+```sql
+CREATE VIEW v_student
+AS
+SELECT id, name, age
+FROM t_student;
+```
+
+执行：
+
+```sql
+UPDATE v_student
+SET age = 21
+WHERE id = 1;
+```
+
+实际修改的是 `t_student` 中对应的记录。因此，视图并不是复制了一份独立数据。
+
+但是，**并不是所有视图都允许进行增删改操作**。
+
+如果视图中包含较复杂的查询结构，例如聚合函数、`GROUP BY`、`DISTINCT`、某些多表连接、`UNION` 或其他无法明确映射回基础表的查询，就可能无法直接通过该视图修改数据。
+
+例如：
+
+```sql
+CREATE VIEW v_dept_count
+AS
+SELECT deptno, COUNT(*) AS employee_count
+FROM emp
+GROUP BY deptno;
+```
+
+其中 `employee_count` 是计算得到的聚合结果，并不能简单对应到某一条基础表记录，因此不能像普通表字段一样直接更新。
+
+> 易错点：“对视图进行增删改会影响原表”只适用于**满足 MySQL 可更新条件的视图**，不能理解为所有视图都支持 `INSERT`、`UPDATE` 和 `DELETE`。复杂查询创建出的视图通常主要用于查询。
+
+视图的核心作用可以概括为：**将复杂 `SELECT` 封装成一个可以像表一样查询的对象，从而提高 SQL 复用性，并在一定程度上隔离应用程序与底层表结构。**
+
+## 事务
+
+**事务（Transaction）是数据库执行操作时的一个逻辑工作单元，用于把一组相互关联的数据库操作作为一个整体执行。** 对于一个完整业务，如果其中包含多条数据修改语句，通常需要保证这些操作要么全部成功，要么全部失败，避免数据库停留在只完成了一部分操作的中间状态。
+
+例如转账业务需要完成两个操作：
+
+1. 从付款账户扣除金额。
+2. 向收款账户增加金额。
+
+假设张三向李四转账 100 元，如果第一条 `UPDATE` 已经成功扣除了张三的 100 元，而第二条 `UPDATE` 因异常没有执行成功，就会导致张三少了 100 元，但李四没有收到钱。
+
+因此，这两条操作应该放入同一个事务：
+
+```sql
+START TRANSACTION;
+
+UPDATE t_account
+SET balance = balance - 100
+WHERE name = '张三';
+
+UPDATE t_account
+SET balance = balance + 100
+WHERE name = '李四';
+
+COMMIT;
+```
+
+如果执行过程中出现错误，则可以回滚：
+
+```sql
+ROLLBACK;
+```
+
+这样整个转账业务不会只完成其中一部分。
+
+> 结论：事务解决的核心问题是**如何把多个相互关联的数据库操作作为一个整体处理，避免部分成功、部分失败造成数据不一致。**
+
+---
+
+### 事务与 SQL 语句
+
+事务最常见的应用对象是修改数据的 DML：
+
+- `INSERT`
+- `DELETE`
+- `UPDATE`
+
+这些语句会改变表中的数据，因此最需要事务保证操作的一致性。
+
+不过，不能简单理解为“事务只对 DML 有效”。`SELECT` 虽然通常不会修改数据，但它同样可以处于事务中，而且查询能够看到哪些数据会受到**事务隔离级别、MVCC 和锁机制**的影响。
+
+DDL 与普通 DML 的事务行为则有所不同。例如 MySQL 中很多 DDL：
+
+```sql
+CREATE TABLE ...
+ALTER TABLE ...
+DROP TABLE ...
+TRUNCATE TABLE ...
+```
+
+会导致**隐式提交（Implicit Commit）**，不能像普通 `INSERT`、`UPDATE`、`DELETE` 一样依赖事务进行普通回滚。
+
+因此，当前阶段可以重点理解为：**事务主要用于管理一组数据读写操作，其中对 DML 数据修改尤其重要。**
+
+---
+
+### 事务的四大特性：ACID
+
+事务具有四个核心特性，简称 **ACID**：
+
+| 特性   | 英文        | 核心含义                                               |
+| ------ | ----------- | ------------------------------------------------------ |
+| 原子性 | Atomicity   | 事务中的操作要么全部完成，要么全部撤销                 |
+| 一致性 | Consistency | 事务执行前后，数据应满足规定的完整性和业务规则         |
+| 隔离性 | Isolation   | 多个事务并发执行时，应尽量避免彼此产生不符合要求的干扰 |
+| 持久性 | Durability  | 事务提交后，修改结果应被可靠保存                       |
+
+#### 原子性
+
+**原子性（Atomicity）表示一个事务中的操作作为一个不可分割的整体，要么全部成功，要么全部失败。**
+
+例如转账：
+
+```sql
+UPDATE t_account
+SET balance = balance - 100
+WHERE id = 1;
+
+UPDATE t_account
+SET balance = balance + 100
+WHERE id = 2;
+```
+
+不能只允许第一条成功而第二条失败。
+
+如果事务最终不能正常完成，就应该撤销本事务已经产生的修改。
+
+#### 一致性
+
+**一致性（Consistency）表示事务执行前和执行后，数据库都应该满足预先定义的数据规则和业务约束。**
+
+例如：
+
+```text
+张三余额：3000
+李四余额：2000
+总余额：5000
+```
+
+张三向李四转账 100 元以后：
+
+```text
+张三余额：2900
+李四余额：2100
+总余额：5000
+```
+
+虽然两个账户各自的余额发生变化，但转账没有凭空产生或消失资金，总金额仍然保持正确。
+
+一致性不仅来自事务机制本身，还需要数据库约束和正确的业务逻辑共同保证。
+
+#### 隔离性
+
+**隔离性（Isolation）解决的是多个事务并发执行时相互影响的问题。**
+
+例如事务 A 正在读取某条账户数据，同时事务 B 也在修改这条数据。如果完全没有隔离，就可能出现：
+
+- 事务 A 读到事务 B 尚未提交的数据；
+- 同一事务前后两次查询结果不同；
+- 查询结果中突然出现新的记录。
+
+数据库通过不同的**事务隔离级别**控制事务之间能够互相看到多少数据，从而在数据一致性和并发性能之间进行平衡。
+
+#### 持久性
+
+**持久性（Durability）表示事务一旦成功 `COMMIT`，其结果就应该被数据库可靠保存，即使随后数据库发生异常，已经提交的结果也不应随意丢失。**
+
+持久性不能简单理解为“执行 `COMMIT` 时才把所有数据页从内存一次性写入硬盘”。现代数据库会结合日志、缓存和数据页刷盘机制实现持久化，例如 InnoDB 会利用 **Redo Log（重做日志）**保证已经提交的数据在故障后能够恢复。
+
+> 易错点：事务执行过程中不能简单理解为“所有修改都只存在内存，直到 `COMMIT` 才一次性写硬盘”。真正的存储过程比这复杂得多。学习事务时只需要记住：**提交表示事务正式完成，回滚表示撤销当前事务尚未提交的修改。**
+
+---
+
+### 事务的开启、提交与回滚
+
+MySQL 可以使用：
+
+```sql
+START TRANSACTION;
+```
+
+开启事务，也可以写成：
+
+```sql
+BEGIN;
+```
+
+例如：
+
+```sql
+START TRANSACTION;
+
+UPDATE t_account
+SET balance = balance - 100
+WHERE id = 1;
+
+UPDATE t_account
+SET balance = balance + 100
+WHERE id = 2;
+
+COMMIT;
+```
+
+#### 提交事务
+
+使用：
+
+```sql
+COMMIT;
+```
+
+表示确认当前事务中的修改。
+
+事务成功提交以后，本次事务结束。
+
+#### 回滚事务
+
+使用：
+
+```sql
+ROLLBACK;
+```
+
+表示撤销当前事务中尚未提交的修改。
+
+例如：
+
+```sql
+START TRANSACTION;
+
+UPDATE t_account
+SET balance = 0
+WHERE id = 1;
+
+ROLLBACK;
+```
+
+执行 `ROLLBACK` 后，本次事务中的修改被撤销。
+
+完整的 `ROLLBACK` 最多只能撤销**当前尚未提交的事务**。一旦执行：
+
+```sql
+COMMIT;
+```
+
+本次事务已经结束，不能再使用普通 `ROLLBACK` 回到提交之前。
+
+无论执行：
+
+```sql
+COMMIT;
+```
+
+还是：
+
+```sql
+ROLLBACK;
+```
+
+当前事务都会结束。
+
+---
+
+### MySQL 的自动提交
+
+MySQL 默认开启**自动提交（Autocommit）**。
+
+可以查看当前会话状态：
+
+```sql
+SELECT @@autocommit;
+```
+
+通常结果为：
+
+```text
+1
+```
+
+表示自动提交开启。
+
+在自动提交模式下，如果没有显式开启事务，一条普通 DML 执行成功后通常会立即提交。
+
+例如：
+
+```sql
+UPDATE t_student
+SET age = 20
+WHERE id = 1;
+```
+
+在默认自动提交模式下，这条语句本身就会形成一次独立的事务。
+
+因此可以简单理解为：
+
+**默认情况下，每一条独立执行的 DML 通常都会自动形成并提交一个事务。**
+
+如果显式执行：
+
+```sql
+START TRANSACTION;
+```
+
+则后续操作会进入显式事务，直到执行：
+
+```sql
+COMMIT;
+```
+
+或：
+
+```sql
+ROLLBACK;
+```
+
+为止。
+
+---
+
+## 事务隔离级别
+
+当多个事务同时操作数据库时，如果彼此完全没有隔离，就容易产生数据读取异常。数据库通过**事务隔离级别（Transaction Isolation Level）**规定一个事务能够看到其他事务修改到什么程度的数据。
+
+MySQL 支持四种标准隔离级别，由低到高依次为：
+
+```text
+READ UNCOMMITTED
+        ↓
+READ COMMITTED
+        ↓
+REPEATABLE READ
+        ↓
+SERIALIZABLE
+```
+
+隔离级别越高，一般能够避免的并发读取问题越多，但同时通常也会带来更高的锁竞争或更低的并发能力。
+
+MySQL InnoDB 默认使用：
+
+```text
+REPEATABLE READ
+```
+
+即**可重复读**。
+
+---
+
+### 查看与设置隔离级别
+
+查看当前会话的隔离级别：
+
+```sql
+SELECT @@SESSION.transaction_isolation;
+```
+
+查看全局默认隔离级别：
+
+```sql
+SELECT @@GLOBAL.transaction_isolation;
+```
+
+例如将当前会话设置为读提交：
+
+```sql
+SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+```
+
+设置全局默认隔离级别：
+
+```sql
+SET GLOBAL TRANSACTION ISOLATION LEVEL READ COMMITTED;
+```
+
+`SESSION` 主要影响当前连接，而修改 `GLOBAL` 通常用于影响之后新建立的连接，并不会简单地把当前已经存在的所有会话立即切换到新的隔离级别。
+
+> 易错点：查看全局变量时应写 `@@GLOBAL.transaction_isolation`，不是 `@@gobal.transaction_isolation`。
+
+---
+
+### 并发事务中的三种常见读取问题
+
+不同隔离级别主要用来解决三种经典问题：
+
+- 脏读（Dirty Read）
+- 不可重复读（Non-repeatable Read）
+- 幻读（Phantom Read）
+
+#### 脏读
+
+**脏读是指一个事务读取到了另一个事务尚未提交的数据。**
+
+例如：
+
+事务 B：
+
+```sql
+START TRANSACTION;
+
+UPDATE t_account
+SET balance = 0
+WHERE id = 1;
+```
+
+此时事务 B 还没有执行 `COMMIT`。
+
+如果事务 A 此时已经能够读取到：
+
+```text
+balance = 0
+```
+
+就发生了脏读。
+
+如果随后事务 B 执行：
+
+```sql
+ROLLBACK;
+```
+
+那么事务 A 刚才读取到的 `0` 实际上从来没有成为正式提交的数据，因此它读取的是不可靠的数据。
+
+> 结论：**脏读的关键是“读到了其他事务未提交的数据”。**
+
+#### 不可重复读
+
+**不可重复读是指在同一个事务中，按照相同条件前后读取同一条记录，由于其他事务在此期间修改并提交了这条记录，导致两次读取结果不同。**
+
+例如事务 A 第一次查询：
+
+```sql
+SELECT balance
+FROM t_account
+WHERE id = 1;
+```
+
+得到：
+
+```text
+1000
+```
+
+事务 B 随后修改并提交：
+
+```sql
+UPDATE t_account
+SET balance = 2000
+WHERE id = 1;
+
+COMMIT;
+```
+
+事务 A 再次执行同样的查询，如果得到：
+
+```text
+2000
+```
+
+那么前后两次查询同一条记录的结果不同，这就是不可重复读。
+
+> 结论：**不可重复读重点关注的是“同一条已有记录的值发生变化”。**
+
+#### 幻读
+
+**幻读主要是指同一事务按照相同查询条件前后查询时，符合条件的记录集合发生变化，看起来像突然出现或消失了记录。**
+
+例如事务 A 查询：
+
+```sql
+SELECT *
+FROM t_student
+WHERE age >= 18;
+```
+
+第一次得到 10 条记录。
+
+事务 B 新增了一条满足条件的数据并提交：
+
+```sql
+INSERT INTO t_student (id, name, age)
+VALUES (100, 'Tom', 20);
+
+COMMIT;
+```
+
+如果事务 A 再次执行相同条件查询时得到 11 条记录，就出现了典型的幻读现象。
+
+不可重复读和幻读的区别可以概括为：
+
+| 问题       | 关注点                               |
+| ---------- | ------------------------------------ |
+| 不可重复读 | 同一条记录的字段值前后发生变化       |
+| 幻读       | 相同查询条件下，记录集合前后发生变化 |
+
+---
+
+### 四种事务隔离级别
+
+不同隔离级别对并发读取问题的处理可以概括为：
+
+| 隔离级别           | 脏读     | 不可重复读 | 幻读                                                         |
+| ------------------ | -------- | ---------- | ------------------------------------------------------------ |
+| `READ UNCOMMITTED` | 可能出现 | 可能出现   | 可能出现                                                     |
+| `READ COMMITTED`   | 避免     | 可能出现   | 可能出现                                                     |
+| `REPEATABLE READ`  | 避免     | 避免       | 标准层面仍需关注；InnoDB 会通过 MVCC 和锁机制避免大多数典型幻读 |
+| `SERIALIZABLE`     | 避免     | 避免       | 避免                                                         |
+
+---
+
+### 读未提交：`READ UNCOMMITTED`
+
+`READ UNCOMMITTED` 是隔离程度最低的一种级别。
+
+在该级别下，一个事务可能读取到另一个事务**尚未提交**的数据，因此可能发生脏读。
+
+设置：
+
+```sql
+SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+```
+
+例如：
+
+| 事务 A                  | 事务 B                           |
+| ----------------------- | -------------------------------- |
+| `START TRANSACTION;`    | `START TRANSACTION;`             |
+| `SELECT * FROM t_test;` |                                  |
+|                         | `INSERT INTO t_test VALUES (4);` |
+| `SELECT * FROM t_test;` |                                  |
+
+此时事务 B 尚未提交，如果事务 A 已经能够看到新插入的记录，就发生了脏读。
+
+`READ UNCOMMITTED` 下可能同时出现：
+
+- 脏读；
+- 不可重复读；
+- 幻读。
+
+> 注意：`READ UNCOMMITTED` 并不只是理论上的隔离级别，MySQL 等数据库实际支持这种隔离级别，只是业务系统中通常很少采用。
+
+---
+
+### 读提交：`READ COMMITTED`
+
+`READ COMMITTED` 表示：
+
+**一个事务只能读取其他事务已经提交的数据。**
+
+设置：
+
+```sql
+SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+```
+
+例如：
+
+| 事务 A               | 事务 B               |
+| -------------------- | -------------------- |
+| `START TRANSACTION;` | `START TRANSACTION;` |
+| 查询某条数据         |                      |
+|                      | 修改数据             |
+| 再次查询             | 尚未提交             |
+|                      | `COMMIT;`            |
+| 再次查询             |                      |
+
+事务 B 提交前，事务 A不会读取到 B 尚未提交的修改，因此解决了脏读。
+
+但是 B 一旦提交，A 后续的查询就可能读取到新的已提交版本，于是同一个事务中的前后两次查询可能不同。
+
+因此 `READ COMMITTED`：
+
+- 避免脏读；
+- 仍可能出现不可重复读；
+- 仍可能出现幻读。
+
+在 MVCC 实现中，可以简单理解为：**`READ COMMITTED` 下每次普通一致性查询通常都会获得新的 Read View，因此能够看到查询开始前已经提交的新版本。**
+
+---
+
+### 可重复读：`REPEATABLE READ`
+
+`REPEATABLE READ` 是 MySQL InnoDB 的默认事务隔离级别。
+
+设置：
+
+```sql
+SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+```
+
+它的基本目标是：
+
+**同一事务中对相同数据进行普通一致性读取时，前后看到的数据保持一致。**
+
+例如：
+
+| 事务 A                 | 事务 B               |
+| ---------------------- | -------------------- |
+| `START TRANSACTION;`   | `START TRANSACTION;` |
+| 查询 `id = 1` 的记录   |                      |
+|                        | 修改 `id = 1` 并提交 |
+| 再次执行同样的普通查询 |                      |
+
+在典型的 InnoDB 可重复读事务中，事务 A 的普通快照查询仍然可以看到之前的一致性版本，从而避免不可重复读。
+
+MySQL InnoDB 在这个隔离级别下主要通过两套机制处理幻读问题：
+
+- **快照读：通过 MVCC 保持一致性快照；**
+- **当前读：通过记录锁、间隙锁以及 Next-Key Lock 等机制限制并发修改。**
+
+因此，要理解 MySQL 的 `REPEATABLE READ`，必须区分**快照读**和**当前读**。
+
+---
+
+## MVCC 与快照读
+
+### 什么是快照读
+
+在 InnoDB 中，普通的非锁定 `SELECT` 通常属于**快照读（Snapshot Read）**，也称一致性非锁定读。
+
+例如：
+
+```sql
+SELECT *
+FROM t_student
+WHERE id = 1;
+```
+
+如果没有：
+
+```sql
+FOR UPDATE
+```
+
+或者其他锁定读取要求，通常会通过 MVCC 获取一个符合当前事务可见性规则的数据版本，而不是必须锁住记录后再读取。
+
+在 `REPEATABLE READ` 下，一个事务第一次执行普通一致性读取时，通常会建立一个 **Read View**，后续快照读继续按照这一可见性视图判断哪些版本可以读取。
+
+> 易错点：不能简单说“事务一启动就一定创建快照”。普通 `REPEATABLE READ` 事务通常是在**第一次一致性快照读**时建立 Read View，而不是单纯执行 `START TRANSACTION` 的瞬间就一定建立。
+
+---
+
+### MVCC
+
+**MVCC（Multi-Version Concurrency Control，多版本并发控制）是一种通过保存数据的多个版本，让不同事务按照各自的可见性规则读取合适版本的并发控制机制。**
+
+它的核心目标之一是：
+
+**让普通读取不必因为其他事务正在修改数据而全部互相阻塞，从而提高数据库并发能力。**
+
+例如事务 A 已经建立了一致性视图：
+
+```sql
+SELECT *
+FROM t_student;
+```
+
+之后事务 B：
+
+```sql
+INSERT INTO t_student (id, name)
+VALUES (10, 'Tom');
+
+COMMIT;
+```
+
+事务 A 再次进行普通快照读时，在 `REPEATABLE READ` 的典型情况下仍然按照原来的 Read View 判断数据可见性，因此可能看不到事务 B 后来提交的这条记录。
+
+这就是快照读能够避免典型幻读的重要原因。
+
+---
+
+### Undo Log 版本链
+
+MVCC 能够读取历史版本，一个重要基础是 **Undo Log（撤销日志）**。
+
+当一条记录被修改时，InnoDB 会保留恢复旧版本所需的信息，并通过版本关联信息形成历史版本链。
+
+可以把它抽象理解为：
+
+`当前版本 → 上一个版本 → 更早版本 → ...`
+
+事务执行快照读时，可以根据 Read View 的可见性规则沿版本链查找自己应该看到的版本。
+
+因此：
+
+- 事务 A 可以读取符合自己视图的数据版本；
+- 事务 B 可以继续产生新的数据版本；
+- 普通读和写之间不必总是直接互相阻塞。
+
+需要注意，Undo Log 中的旧版本并不会永久保存。**当数据库确认这些历史版本已经没有任何事务需要以后，会逐步进行清理。**
+
+> 结论：MVCC 可以理解为“**数据多版本 + Read View 可见性判断 + Undo Log 历史版本**”共同实现的一套并发读取机制。
+
+---
+
+### 快照读如何避免幻读
+
+例如事务 A：
+
+```sql
+START TRANSACTION;
+
+SELECT * FROM t_student;
+```
+
+第一次快照读建立一致性视图。
+
+事务 B：
+
+```sql
+INSERT INTO t_student (id, name)
+VALUES (10, 'Tom');
+
+COMMIT;
+```
+
+事务 A再次执行：
+
+```sql
+SELECT * FROM t_student;
+```
+
+在 `REPEATABLE READ` 下，后续普通快照读继续按照原来的 Read View 判断数据是否可见，因此事务 B 后来提交的新记录通常不会突然出现在事务 A 的查询结果中。
+
+所以，**在一个事务中始终使用普通快照读时，InnoDB 的 MVCC 能够很好地避免典型幻读。**
+
+---
+
+## 当前读与锁
+
+### 什么是当前读
+
+与快照读不同，**当前读（Current Read）要求基于当前最新的可用数据进行读取或修改。**
+
+最典型的锁定读取是：
+
+```sql
+SELECT *
+FROM t_student
+WHERE id = 1
+FOR UPDATE;
+```
+
+常见的当前读或具有当前读语义的操作包括：
+
+- `SELECT ... FOR UPDATE`
+- `SELECT ... FOR SHARE`
+- `UPDATE`
+- `DELETE`
+
+`UPDATE` 和 `DELETE` 必须基于当前数据进行修改，因此不能只依据事务开始时的旧快照。
+
+`INSERT` 本身不是普通意义上的“读取”，但插入操作同样需要参与 InnoDB 的锁和并发控制。
+
+---
+
+### `SELECT ... FOR UPDATE`
+
+例如：
+
+```sql
+SELECT *
+FROM t_student
+WHERE id = 10
+FOR UPDATE;
+```
+
+`FOR UPDATE` 表示进行**加锁读取**。查询到的记录会按照 InnoDB 的锁规则被锁定，用于防止其他事务同时进行可能产生冲突的修改。
+
+这种“读取之前先加锁，以保证后续操作安全”的思路通常属于**悲观锁（Pessimistic Locking）**。
+
+悲观锁假设并发冲突可能发生，因此先通过数据库锁限制其他事务。
+
+---
+
+### 记录锁、间隙锁和 Next-Key Lock
+
+InnoDB 中与当前读关系密切的锁包括：
+
+#### 记录锁
+
+**Record Lock（记录锁）**锁定的是索引记录本身。
+
+例如某条索引记录：
+
+`id = 2`
+
+被锁定以后，其他事务对这条记录执行冲突的修改或删除时可能需要等待。
+
+#### 间隙锁
+
+**Gap Lock（间隙锁）**锁定的是索引记录之间的范围，而不是某条已经存在的记录。
+
+它主要用于阻止其他事务在指定索引范围内插入新的记录，从而帮助避免幻读。
+
+#### Next-Key Lock
+
+**Next-Key Lock 可以理解为记录锁与其前方间隙锁的组合。**
+
+在 `REPEATABLE READ` 下，InnoDB 对某些范围形式的锁定读取会使用 Next-Key Lock，使：
+
+- 已有记录不能被其他事务随意进行冲突修改；
+- 锁定范围内也不能随意插入新的匹配记录。
+
+例如，假设 `id` 已建立索引：
+
+```sql
+SELECT *
+FROM t_test
+WHERE id BETWEEN 2 AND 4
+FOR UPDATE;
+```
+
+对于符合条件的范围，InnoDB 可能通过记录锁和间隙相关锁限制其他事务对相应索引范围进行冲突性的 `UPDATE`、`DELETE` 或 `INSERT`。
+
+因此，其他事务如果试图向被锁定范围插入新的匹配数据，就可能被阻塞。
+
+---
+
+### `FOR UPDATE` 不一定只锁查询结果中的几行
+
+不能简单理解为：
+
+**使用 `FOR UPDATE` 就一定只锁最终查出来的几行。**
+
+InnoDB 的行锁本质上是**索引记录锁**，实际锁定范围与以下因素有关：
+
+- 查询条件；
+- 是否存在可用索引；
+- 使用的是唯一等值查询还是范围查询；
+- 实际执行计划；
+- 当前事务隔离级别。
+
+例如对于唯一索引的等值查询：
+
+```sql
+SELECT *
+FROM t_student
+WHERE id = 10
+FOR UPDATE;
+```
+
+锁的范围通常可以比较精确。
+
+而范围查询：
+
+```sql
+SELECT *
+FROM t_student
+WHERE id BETWEEN 10 AND 20
+FOR UPDATE;
+```
+
+则可能涉及 Next-Key Lock。
+
+如果查询条件没有合适的索引，InnoDB 可能需要扫描大量记录，实际锁定范围也可能比预期大得多，从而明显降低并发能力。
+
+> 易错点：不是“查询字段必须是主键或索引，否则就不能加行锁”，而是**InnoDB 的记录锁建立在索引之上**。缺少合适索引时，数据库可能扫描并锁定大量记录，使锁的实际影响范围非常大。
+
+---
+
+## 可重复读下的幻读问题
+
+MySQL InnoDB 在 `REPEATABLE READ` 下通过：
+
+- 快照读 + MVCC；
+- 当前读 + 锁机制；
+
+避免了绝大多数典型的幻读问题。
+
+但是，要准确理解它，必须注意**快照读和当前读看到的并不是完全相同的数据世界**。
+
+### 始终使用快照读
+
+如果一个事务从头到尾都执行普通快照读：
+
+```sql
+SELECT ...
+```
+
+通常都会按照同一个 Read View 判断版本可见性。
+
+其他事务中途插入并提交的新记录不会突然进入当前事务原有的快照，因此不会出现典型幻读。
+
+### 始终使用加锁当前读
+
+如果事务一开始就针对业务范围执行：
+
+```sql
+SELECT ...
+FOR UPDATE;
+```
+
+并且查询条件和索引能够形成有效的范围锁，那么其他事务对该范围进行冲突插入时可能被阻塞，从而避免记录集合被改变。
+
+### 快照读与当前读混合
+
+比较容易产生困惑的是：
+
+**同一个事务先执行快照读，后面又执行当前读。**
+
+例如事务 A 首先执行：
+
+```sql
+START TRANSACTION;
+
+SELECT * FROM t_test;
+```
+
+此时读取旧的一致性快照。
+
+事务 B：
+
+```sql
+INSERT INTO t_test VALUES (5);
+
+COMMIT;
+```
+
+如果事务 A 再执行：
+
+```sql
+SELECT *
+FROM t_test
+FOR UPDATE;
+```
+
+这条语句属于当前读，需要读取当前最新可用的数据，因此可能看到事务 B 已经提交的 `5`。
+
+于是事务 A：
+
+- 第一次快照读看不到 `5`；
+- 后面的当前读能够看到 `5`。
+
+前后查询得到的记录集合不同，就会表现出类似幻读的现象。
+
+这里不能理解为“MVCC 突然失效了”，而是因为**前后使用了不同的读取方式和可见性规则**。
+
+---
+
+### 修改其他事务新插入的数据
+
+还有一种比较特殊的情况。
+
+事务 A 首先进行快照读：
+
+```sql
+START TRANSACTION;
+
+SELECT * FROM t_test;
+```
+
+事务 B 插入：
+
+```sql
+INSERT INTO t_test VALUES (6);
+
+COMMIT;
+```
+
+事务 A 原来的快照并看不到 `6`。
+
+但如果事务 A 执行：
+
+```sql
+UPDATE t_test
+SET id = 100
+WHERE id = 6;
+```
+
+`UPDATE` 使用当前数据语义，因此可能找到事务 B 已经提交的这条新记录并进行修改。
+
+事务 A 随后再次执行普通查询：
+
+```sql
+SELECT * FROM t_test;
+```
+
+由于事务通常能够看到**自己产生的修改**，结果集中可能出现这条被自己修改后的记录。
+
+于是前后两次快照查询的记录集合也可能表现出变化。
+
+> 注意：这属于 InnoDB `REPEATABLE READ` 下较特殊的可见性现象。理解它的关键仍然是：**普通快照读、当前读以及事务自身修改的数据具有不同的可见性规则。**
+
+---
+
+### 如何尽量避免这种幻读现象
+
+如果业务明确要求：
+
+**查询某个范围以后，这个范围的数据在当前事务结束之前不能被其他事务插入或修改，从而保证后续业务操作基于同一个锁定范围进行处理，**
+
+可以从事务开始阶段就使用合适的加锁读取，例如：
+
+```sql
+START TRANSACTION;
+
+SELECT *
+FROM t_student
+WHERE id BETWEEN 10 AND 20
+FOR UPDATE;
+```
+
+这样数据库可以根据索引和查询条件建立相应锁，限制其他事务进行冲突操作。
+
+但悲观锁会降低并发能力，因此不应该为了“保险”而无条件大量使用 `FOR UPDATE`。
+
+> 结论：在 `REPEATABLE READ` 下，**普通快照读依靠 MVCC 保证一致性视图，加锁当前读依靠 InnoDB 锁机制保证当前数据范围的一致性。不要把两种读取方式混为一谈。**
+
+---
+
+### 串行化：`SERIALIZABLE`
+
+`SERIALIZABLE` 是四种标准隔离级别中隔离程度最高的一种。
+
+设置：
+
+```sql
+SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+```
+
+它通过更加严格的并发控制，使事务执行效果尽可能接近**串行顺序执行**，从而避免：
+
+- 脏读；
+- 不可重复读；
+- 幻读。
+
+但这并不意味着数据库中“完全不存在任何并发”。
+
+更准确地说，**存在数据冲突的事务更容易相互等待或阻塞，因此整体并发能力明显降低。** 如果多个事务操作互不冲突的数据，仍然可能存在一定程度的并发执行。
+
+因此，隔离级别越高并不意味着一定越适合实际系统。数据库需要在：
+
+- 一致性；
+- 并发性能；
+
+之间进行权衡。
+
+---
+
+### 隔离级别总结
+
+四种隔离级别可以按照下面的顺序理解：
+
+`READ UNCOMMITTED < READ COMMITTED < REPEATABLE READ < SERIALIZABLE`
+
+其中：
+
+- `READ UNCOMMITTED`：允许读取未提交数据，并发高但隔离程度最低；
+- `READ COMMITTED`：只能读取已提交数据，解决脏读；
+- `REPEATABLE READ`：同一事务中的普通一致性读取具有更稳定的数据视图，是 MySQL InnoDB 默认级别；
+- `SERIALIZABLE`：隔离程度最高，但并发能力通常最低。
+
+对于 MySQL InnoDB 的 `REPEATABLE READ`，需要重点掌握：
+
+| 读取方式                         | 核心机制                         | 主要特点                             |
+| -------------------------------- | -------------------------------- | ------------------------------------ |
+| 普通 `SELECT` 快照读             | MVCC + Read View + Undo Log 版本 | 读取一致性历史版本，读写通常互不阻塞 |
+| `SELECT ... FOR UPDATE` 等当前读 | 记录锁、间隙锁、Next-Key Lock 等 | 读取当前数据并进行锁定，限制冲突操作 |
+
+> 结论：理解 MySQL 事务隔离的关键不是单纯背诵四个级别，而是理解**不同事务在什么情况下能够看到其他事务的数据，以及 MVCC 和锁分别解决了什么问题。**
+
+---
+
+## 悲观锁与乐观锁
+
+`SELECT ... FOR UPDATE` 所代表的是典型的**悲观锁思想**。
+
+悲观锁认为：
+
+**并发修改发生冲突的概率较高，因此在操作数据之前先锁定资源。**
+
+例如：
+
+```sql
+START TRANSACTION;
+
+SELECT balance
+FROM t_account
+WHERE id = 1
+FOR UPDATE;
+
+UPDATE t_account
+SET balance = balance - 100
+WHERE id = 1;
+
+COMMIT;
+```
+
+其他事务如果同时尝试修改这条受到冲突锁保护的数据，通常需要等待。
+
+悲观锁能够直接依赖数据库锁保证并发安全，但锁竞争严重时会降低吞吐量。
+
+与之对应的是**乐观锁（Optimistic Locking）**。
+
+乐观锁认为：
+
+**并发冲突并不会频繁发生，因此读取数据时不立即加排他锁，而是在更新时检查数据是否仍然处于自己读取时的状态。**
+
+实际数据库开发中常见的做法是使用版本号字段，例如：
+
+```sql
+UPDATE t_product
+SET stock = stock - 1,
+    version = version + 1
+WHERE id = 1
+  AND version = 5;
+```
+
+如果更新成功，说明数据从读取到修改期间版本仍然是 `5`；如果受影响行数为 `0`，说明数据可能已经被其他事务修改，需要重新读取或进行相应处理。
+
+这种“读取旧值 → 修改前进行比较 → 条件满足才更新”的思想与 **CAS（Compare And Swap，比较并交换）**比较接近。
+
+> 注意：乐观锁主要解决的是**并发修改冲突和更新安全问题**，它不是数据库事务隔离级别中专门解决幻读的机制，不能与 InnoDB 的 Next-Key Lock 混为一谈。
+
+## 常用 DBA 命令
+
+**DBA（Database Administrator，数据库管理员）**负责数据库的用户管理、权限控制、数据备份与恢复等管理工作。MySQL 中常见的 DBA 操作包括创建用户、授权与撤销权限、修改用户信息、删除用户以及备份和恢复数据。
+
+MySQL 中的账户并不只是由用户名决定，而是由 **`用户名 + 主机`** 共同确定。例如，`'java1'@'localhost'` 和 `'java1'@'%'` 在 MySQL 中属于两个不同的账户。
+
+---
+
+### 用户管理
+
+#### 创建用户
+
+MySQL 使用 `CREATE USER` 创建用户。
+
+创建一个只能从 MySQL 服务器本机连接的用户：
+
+```sql
+CREATE USER 'java1'@'localhost'
+IDENTIFIED BY '123';
+```
+
+其中：
+
+- `java1`：用户名；
+- `localhost`：允许登录的主机；
+- `123`：登录密码。
+
+创建允许从其他主机连接的用户：
+
+```sql
+CREATE USER 'java2'@'%'
+IDENTIFIED BY '123';
+```
+
+其中 `%` 是通配符，表示允许从任意主机地址尝试连接。
+
+> 注意：`'java2'@'%'` 更准确的含义是“允许从任意来源主机匹配该账户”，不能简单理解为“外网用户”。客户端能否真正远程连接，还会受到 MySQL 监听地址、防火墙、网络访问策略等因素影响。
+
+新创建的普通用户默认没有业务数据库的访问权限，需要通过 `GRANT` 进一步授权。
+
+使用具有管理权限的账户可以查看 MySQL 中的用户：
+
+```sql
+SELECT user, host
+FROM mysql.user;
+```
+
+查询结果中的 `user` 和 `host` 应结合起来理解，例如：
+
+| user  | host      |
+| ----- | --------- |
+| java1 | localhost |
+| java2 | %         |
+
+分别对应账户 `'java1'@'localhost'` 和 `'java2'@'%'`。
+
+---
+
+#### 修改用户密码
+
+具有相应管理权限的用户可以通过 `ALTER USER` 修改账户密码。
+
+修改本地账户：
+
+```sql
+ALTER USER 'java1'@'localhost'
+IDENTIFIED BY '456';
+```
+
+修改允许远程连接的账户：
+
+```sql
+ALTER USER 'java2'@'%'
+IDENTIFIED BY '456';
+```
+
+MySQL 8 中推荐使用 `ALTER USER` 管理账户密码。
+
+> 注意：通过 `CREATE USER`、`ALTER USER`、`GRANT`、`REVOKE` 等正式账户管理语句操作后，MySQL 会立即更新权限信息，**通常不需要额外执行 `FLUSH PRIVILEGES`**。`FLUSH PRIVILEGES` 主要用于直接修改授权系统表后重新加载权限，而直接修改系统权限表本身通常也不推荐。
+
+---
+
+#### 修改用户名或主机
+
+使用 `RENAME USER` 可以修改账户名称，也可以修改账户对应的主机部分：
+
+```sql
+RENAME USER '原用户名'@'原主机'
+TO '新用户名'@'新主机';
+```
+
+例如：
+
+```sql
+RENAME USER 'java1'@'localhost'
+TO 'java11'@'localhost';
+```
+
+也可以同时改变用户名和允许连接的主机：
+
+```sql
+RENAME USER 'java11'@'localhost'
+TO 'java123'@'%';
+```
+
+由于 MySQL 使用 `用户名 + 主机` 标识一个账户，所以将：
+
+```text
+'java11'@'localhost'
+```
+
+修改为：
+
+```text
+'java123'@'%'
+```
+
+不仅改变了用户名，也改变了该账户能够匹配的客户端来源范围。
+
+---
+
+#### 删除用户
+
+使用 `DROP USER` 删除账户：
+
+```sql
+DROP USER 'java123'@'localhost';
+```
+
+例如删除允许任意主机匹配的 `java2`：
+
+```sql
+DROP USER 'java2'@'%';
+```
+
+如果希望账户不存在时不报错，可以使用：
+
+```sql
+DROP USER IF EXISTS 'java2'@'%';
+```
+
+删除用户会删除该 MySQL 账户及其对应的权限信息，但**不会自动删除该用户曾经创建的普通业务表和其中的数据**。
+
+---
+
+### 权限管理
+
+MySQL 使用 `GRANT` 为用户授权，使用 `REVOKE` 撤销权限。
+
+授权的核心结构为：
+
+```sql
+GRANT 权限
+ON 数据库.对象
+TO '用户名'@'主机';
+```
+
+例如：
+
+```sql
+GRANT SELECT
+ON test.*
+TO 'java1'@'localhost';
+```
+
+表示允许 `'java1'@'localhost'` 查询 `test` 数据库中的所有表。
+
+#### 常见权限
+
+常见权限包括：
+
+| 权限             | 作用                           |
+| ---------------- | ------------------------------ |
+| `SELECT`         | 查询数据                       |
+| `INSERT`         | 插入数据                       |
+| `UPDATE`         | 修改数据                       |
+| `DELETE`         | 删除数据                       |
+| `CREATE`         | 创建数据库对象                 |
+| `ALTER`          | 修改表结构等数据库对象         |
+| `DROP`           | 删除数据库对象                 |
+| `INDEX`          | 创建或删除索引                 |
+| `ALL PRIVILEGES` | 授予指定范围内可授予的全部权限 |
+
+多个权限之间使用逗号分隔：
+
+```sql
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON test.*
+TO 'java1'@'localhost';
+```
+
+#### 权限作用范围
+
+`ON` 后面用于指定权限的作用范围：
+
+```text
+数据库名.对象名
+```
+
+例如：
+
+```sql
+test.emp
+```
+
+表示 `test` 数据库中的 `emp` 表。
+
+```sql
+test.*
+```
+
+表示 `test` 数据库中的所有相关对象。
+
+```sql
+*.*
+```
+
+表示所有数据库中的所有相应对象，是非常大的权限范围，应谨慎使用。
+
+例如，为 `java1` 授予所有数据库中所有表的查询权限：
+
+```sql
+GRANT SELECT
+ON *.*
+TO 'java1'@'localhost';
+```
+
+为 `java1` 授予 `test` 数据库范围内的全部权限：
+
+```sql
+GRANT ALL PRIVILEGES
+ON test.*
+TO 'java1'@'localhost';
+```
+
+> 注意：授权应遵循**最小权限原则（Principle of Least Privilege）**，即只授予完成工作所必需的权限，不应为了方便直接授予过大的权限。
+
+---
+
+#### `USAGE` 权限
+
+查看一个几乎没有业务权限的用户时，可能看到类似：
+
+```sql
+GRANT USAGE ON *.* TO 'java1'@'localhost';
+```
+
+`USAGE` 并不是普通意义上的“登录权限”，更准确地说，它表示：
+
+**该账户存在，但在对应权限范围内没有额外授予实际数据库操作权限。**
+
+账户能否成功登录还取决于账户本身、身份认证信息以及连接来源等配置。
+
+---
+
+#### 查看用户权限
+
+使用 `SHOW GRANTS` 可以查看某个账户当前拥有的权限：
+
+```sql
+SHOW GRANTS FOR 'java1'@'localhost';
+```
+
+例如：
+
+```sql
+SHOW GRANTS FOR 'java2'@'%';
+```
+
+这是检查用户权限最常用的命令之一。
+
+---
+
+#### 允许用户继续授权
+
+默认情况下，一个用户即使自己拥有某项权限，也不代表可以把该权限继续授予其他用户。
+
+使用：
+
+```sql
+WITH GRANT OPTION
+```
+
+可以允许用户将自己拥有的相应权限继续授予其他账户。
+
+例如：
+
+```sql
+GRANT SELECT, INSERT, DELETE, UPDATE
+ON test.*
+TO 'java2'@'%'
+WITH GRANT OPTION;
+```
+
+此后 `java2` 在权限范围允许的情况下，可以将这些权限授予其他用户。
+
+> 注意：`WITH GRANT OPTION` 会扩大账户的权限管理能力，实际系统中应谨慎授予，否则用户可能继续将权限传播给更多账户。
+
+---
+
+### 撤销用户权限
+
+使用 `REVOKE` 可以撤销已经授予的权限。
+
+基本语法：
+
+```sql
+REVOKE 权限
+ON 数据库名.对象名
+FROM '用户名'@'主机';
+```
+
+例如，撤销 `java1` 在 `test` 数据库上的 `INSERT`、`UPDATE` 和 `DELETE` 权限：
+
+```sql
+REVOKE INSERT, UPDATE, DELETE
+ON test.*
+FROM 'java1'@'localhost';
+```
+
+撤销 `java2` 的 `INSERT` 权限：
+
+```sql
+REVOKE INSERT
+ON test.*
+FROM 'java2'@'%';
+```
+
+执行以后可以再次使用：
+
+```sql
+SHOW GRANTS FOR 'java1'@'localhost';
+```
+
+检查剩余权限。
+
+撤销权限时，需要针对**实际已经授予权限的作用范围**进行操作。例如，如果之前授权的是：
+
+```sql
+GRANT SELECT
+ON test.*
+TO 'java1'@'localhost';
+```
+
+撤销时也应针对对应的权限级别：
+
+```sql
+REVOKE SELECT
+ON test.*
+FROM 'java1'@'localhost';
+```
+
+不能随意换成其他完全不同的授权范围。
+
+---
+
+### 数据备份与恢复
+
+MySQL 常用的逻辑备份工具是 **`mysqldump`**。它可以将数据库中的表结构和数据导出为 SQL 文件，之后再通过 MySQL 客户端重新执行这些 SQL，实现数据恢复。
+
+> 注意：`mysqldump` 和 `mysql` 都是操作系统命令行工具，不是在登录后的 `mysql>` 提示符中执行的 SQL 语句。
+
+---
+
+#### 使用 `mysqldump` 导出数据
+
+##### 导出整个数据库
+
+在操作系统命令行中执行：
+
+```bash
+mysqldump -uroot -p --default-character-set=utf8mb4 test > d:/test.sql
+```
+
+执行后会提示输入密码。
+
+其中：
+
+- `mysqldump`：MySQL 逻辑备份工具；
+- `-u root`：使用 `root` 用户；
+- `-p`：提示输入密码；
+- `--default-character-set=utf8mb4`：指定连接字符集；
+- `test`：要导出的数据库；
+- `>`：将命令输出重定向到文件；
+- `d:/test.sql`：最终生成的 SQL 文件。
+
+备份文件中通常包含：
+
+- 建表语句；
+- 插入数据的 SQL；
+- 其他与恢复数据库对象有关的语句。
+
+> 注意：不建议直接把密码写成 `-p123456`，因为密码可能出现在命令历史、进程信息等位置。更安全的方式是只写 `-p`，然后根据提示输入密码。
+
+导出指定表
+
+如果只需要导出 `test` 数据库中的 `emp` 表：
+
+```bash
+mysqldump -uroot -p --default-character-set=utf8mb4 test emp > d:/emp.sql
+```
+
+其基本形式为：
+
+```bash
+mysqldump 用户参数 数据库名 表名 > 备份文件
+```
+
+如果指定多个表，也可以继续在数据库名后列出多个表名。
+
+---
+
+#### 使用命令行恢复数据
+
+假设已经存在：
+
+```text
+d:/test.sql
+```
+
+首先需要确保用于接收数据的数据库已经存在。例如登录 MySQL 后创建：
+
+```sql
+CREATE DATABASE test;
+```
+
+随后退出 MySQL 客户端，在操作系统命令行执行：
+
+```bash
+mysql -uroot -p --default-character-set=utf8mb4 test < d:/test.sql
+```
+
+其中：
+
+- `mysql`：MySQL 命令行客户端；
+- `test`：将 SQL 文件导入的目标数据库；
+- `<`：将文件内容作为 MySQL 客户端的输入；
+- `d:/test.sql`：需要执行的 SQL 文件。
+
+可以把导入过程理解为：**重新执行备份 SQL 文件中的建表和插入等语句，从而恢复数据库结构和数据。**
+
+> 注意：是否需要提前创建数据库，取决于备份文件本身是否包含 `CREATE DATABASE` 和 `USE` 等语句。如果备份时只导出了某个数据库中的表结构和数据，通常需要先准备目标数据库。
+
+---
+
+#### 使用 `SOURCE` 恢复数据
+
+也可以先登录 MySQL：
+
+```bash
+mysql -uroot -p
+```
+
+然后创建并切换到目标数据库：
+
+```sql
+CREATE DATABASE test;
+
+USE test;
+```
+
+再执行：
+
+```sql
+SOURCE d:/test.sql;
+```
+
+`SOURCE` 会读取指定 SQL 文件，并按照文件中的内容依次执行 SQL。
+
+需要注意，`SOURCE` 是 MySQL 命令行客户端提供的命令，主要在 `mysql` 客户端环境中使用。
+
+---
+
+#### 使用 Navicat 备份和恢复
+
+除了命令行方式，也可以通过 Navicat 等图形化数据库工具进行操作。
+
+Navicat 中常见的功能包括：
+
+- **转储 SQL 文件**：将数据库或表导出为 SQL；
+- **运行 SQL 文件**：将已有 SQL 文件重新执行到数据库中。
+
+这些图形化功能本质上仍然是在完成数据库对象和数据的导出、再导入过程，只是操作方式更加直观。
+
+## 常用 mysql 客户端工具

@@ -33,14 +33,15 @@ class SiteBuilderTest {
     }
 
     @Test void staticOutputExcludesDraftsSanitizesHtmlAndKeepsChapterSearch(@TempDir Path directory) throws Exception {
-        Files.createDirectories(directory.resolve("config")); Files.createDirectories(directory.resolve("content"));
+        Files.createDirectories(directory.resolve("config")); Files.createDirectories(directory.resolve("content/Java"));
         Files.createDirectories(directory.resolve("dist/assets/.vite"));
         Files.writeString(directory.resolve("config/site.yml"), "title: Test\nurl: https://example.test\ndescription: Test\nfolders:\n  - id: java\n    name: Java\n    eyebrow: JAVA\n    description: Test\n    color: green\n");
         Files.writeString(directory.resolve("dist/assets/.vite/manifest.json"), "{\"web/main.ts\":{\"css\":[\"app.css\"]}}");
-        Files.writeString(directory.resolve("content/note.md"), "---\nid: java-01\ntitle: Test\nfolder: java\ndate: 2026-01-01\nlegacyUrls: [/old.html]\n---\n\n## 环境变量 `CLASSPATH`\n\n正文 $a_b < c$。\n\n[站内链接](/read/java-01/#环境变量-classpath)\n\n<script>alert('x')</script>\n\n<img src=\"x.png\" onerror=\"alert(1)\">\n");
+        Files.writeString(directory.resolve("content/Java/文件名即标题.md"), "---\nid: java-01\ndate: 2026-01-01\nlegacyUrls: [/old.html]\n---\n\n## 环境变量 `CLASSPATH`\n\n正文 $a_b < c$。\n\n[站内链接](/read/java-01/#环境变量-classpath)\n\n<script>alert('x')</script>\n\n<img src=\"x.png\" onerror=\"alert(1)\">\n");
         Files.writeString(directory.resolve("content/draft.md"), "---\nid: draft\ntitle: PRIVATE_DRAFT_SENTINEL\nfolder: java\ndate: 2026-01-01\ndraft: true\n---\nPRIVATE_DRAFT_SENTINEL");
         new SiteBuilder(directory).build();
         String html = Files.readString(directory.resolve("dist/read/java-01/index.html"));
+        assertTrue(html.contains("文件名即标题"));
         String search = Files.readString(directory.resolve("dist/data/search-java.json"));
         assertTrue(html.contains("href=\"/read/java-01/#环境变量-classpath\""));
         assertFalse(html.contains("alert(")); assertFalse(html.contains("onerror="));
@@ -56,7 +57,7 @@ class SiteBuilderTest {
         assertEquals(html, Files.readString(directory.resolve("dist/read/java-01/index.html")));
         assertEquals(previousCatalog, Files.readString(directory.resolve("dist/data/catalog.json")));
         Files.delete(directory.resolve("content/broken.md"));
-        Files.delete(directory.resolve("content/note.md"));
+        Files.delete(directory.resolve("content/Java/文件名即标题.md"));
         new SiteBuilder(directory).build();
         assertFalse(Files.exists(directory.resolve("dist/read/java-01/index.html")));
         assertFalse(Files.exists(directory.resolve("dist/old.html")));
