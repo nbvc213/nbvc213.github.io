@@ -1,11 +1,6 @@
 ---
-id: java-24
-order: 24
 date: 2026-09-05
-updated: 2026-09-05
 tags: ["Web基础"]
-legacyUrls:
-  - "/java/笔记/2026-09-05-24-HTML.html"
 ---
 
 ## Web 前端简介

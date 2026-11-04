@@ -22,7 +22,7 @@
 <symbol id="star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.3.9-4.5 4.4 1.1 6.2-5.7-3-5.7 3 1.1-6.2-4.5-4.4 6.3-.9L12 3Z"/></symbol>
 <symbol id="chapters" viewBox="0 0 24 24"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm3 0v18m4-13h5m-5 4h5m-5 4h3"/></symbol>
 <symbol id="menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
-<symbol id="copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+<symbol id="copy" viewBox="0 0 24 24"><path d="M8 8V5.8A2.8 2.8 0 0 1 10.8 3h7.4A2.8 2.8 0 0 1 21 5.8v7.4a2.8 2.8 0 0 1-2.8 2.8H16"/><rect x="3" y="8" width="13" height="13" rx="3"/></symbol>
 <symbol id="collapse" viewBox="0 0 24 24"><path d="M3 8h5V3m13 5h-5V3M3 16h5v5m13-5h-5v5"/></symbol>
 <symbol id="wrap" viewBox="0 0 24 24"><path d="M4 5h11a6 6 0 0 1 0 12H4m4-4-4 4 4 4"/></symbol>
 <symbol id="line-numbers" viewBox="0 0 24 24"><path d="M11 5h10"/><path d="M11 12h10"/><path d="M11 19h10"/><path d="M4 4h1v5"/><path d="M4 9h2"/><path d="M6.5 20H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02"/></symbol>

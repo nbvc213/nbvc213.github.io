@@ -39,10 +39,10 @@ public final class SiteBuilder {
     private final TemplateEngine templates;
     private final List<Map<String, Object>> notes = new ArrayList<>();
     private final List<Map<String, Object>> sections = new ArrayList<>();
-    private final Map<String, String> oldUrls = new HashMap<>();
     private final Set<String> ids = new HashSet<>();
     private Map<String, Object> site;
     private List<Map<String, Object>> folders;
+    private Map<String, Object> contentIndex = Map.of();
     private String stylesheet;
 
     public SiteBuilder(Path root) {
@@ -106,7 +106,20 @@ public final class SiteBuilder {
     @SuppressWarnings("unchecked")
     private void buildContent() throws IOException {
         site = yaml.load(Files.readString(root.resolve("config/site.yml")));
+        Path indexPath = root.resolve("config/content-index.json");
+        if (Files.exists(indexPath)) contentIndex = json.readValue(Files.readString(indexPath), Map.class);
         folders = (List<Map<String, Object>>) site.get("folders");
+        if (folders == null) {
+            folders = new ArrayList<>();
+            Map<String,Object> folderIndex = (Map<String,Object>) contentIndex.getOrDefault("folders", Map.of());
+            try (var directories = Files.list(root.resolve("content"))) {
+                for (Path directory : directories.filter(Files::isDirectory).sorted().toList()) {
+                    String name = directory.getFileName().toString();
+                    folders.add(new HashMap<>(Map.of("name", name, "id", folderIndex.getOrDefault(name, "folder-" + UUID.nameUUIDFromBytes(name.getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString()))));
+                }
+            }
+        }
+        site.put("folders", folders);
         Set<String> folderIds = new HashSet<>();
         for (var folder : folders) {
             String id = String.valueOf(folder.get("id"));
@@ -117,7 +130,8 @@ public final class SiteBuilder {
             for (var path : paths.filter(p -> p.toString().endsWith(".md")).sorted().toList()) readNote(path, folderIds);
         }
         notes.sort(Comparator.comparing((Map<String, Object> n) -> folders.stream().map(f -> f.get("id")).toList().indexOf(n.get("folder")))
-                .thenComparingInt(n -> ((Number) n.get("order")).intValue()).thenComparing(n -> (String) n.get("id")));
+                .thenComparing(n -> naturalKey((String) n.get("title"))))
+        ; int displayOrder = 0; for (var note : notes) note.put("order", ++displayOrder);
         for (var note : notes) processContent(note);
         for (var note : notes) {
             List<Map<String, Object>> siblings = notes.stream().filter(n -> n.get("folder").equals(note.get("folder"))).toList();
@@ -143,12 +157,6 @@ public final class SiteBuilder {
         for (var folder : folders) render((String) folder.get("url"), "folder", (String) folder.get("name"), null, folder);
         for (var note : notes) render((String) note.get("url"), "article", (String) note.get("title"), note, null);
         render("/404.html", "notfound", "这页笔记暂时找不到", null, null);
-        for (var entryUrl : oldUrls.entrySet()) {
-            String path = entryUrl.getKey();
-            if (!path.endsWith(".html")) continue;
-            String dest = entryUrl.getValue();
-            write(path, "<!doctype html><html lang=\"zh-CN\"><meta charset=\"utf-8\"><title>笔记已迁移</title><link rel=\"canonical\" href=\"" + site.get("url") + dest + "\"><meta name=\"robots\" content=\"noindex\"><p>这篇笔记有了新地址。<a href=\"" + dest + "\">继续阅读</a></p><script>location.replace(" + json.writeValueAsString(dest) + "+location.search+location.hash)</script></html>");
-        }
         var catalog = new LinkedHashMap<String, Object>();
         catalog.put("site", site); catalog.put("folders", folders); catalog.put("notes", notes.stream().map(this::compact).toList());
         write("/data/catalog.json", json.writeValueAsString(catalog));
@@ -171,21 +179,35 @@ public final class SiteBuilder {
                 Path to = output.resolve(media.relativize(p)); Files.createDirectories(to.getParent()); Files.copy(p, to, StandardCopyOption.REPLACE_EXISTING);
             }
         }
-        System.out.printf("Built %d notes · %d folders · %d search sections · %d legacy redirects%n", notes.size(), folders.size(), sections.size(), oldUrls.size());
+        System.out.printf("Built %d notes · %d folders · %d search sections%n", notes.size(), folders.size(), sections.size());
+    }
+
+    static String naturalKey(String title) {
+        var m = java.util.regex.Pattern.compile("[0-9]+").matcher(title);
+        var out = new StringBuilder();
+        while(m.find()) m.appendReplacement(out, String.format("%040d", new java.math.BigInteger(m.group())));
+        m.appendTail(out); return out.toString();
     }
 
     private void readNote(Path path, Set<String> folderIds) throws IOException {
         String text = Files.readString(path).replace("\r\n", "\n");
-        if (!text.startsWith("---\n")) throw new IllegalArgumentException("Missing front matter: " + path);
-        int end = text.indexOf("\n---", 4);
+        if (!text.startsWith("---\n")) text = "---\n---\n" + text;
+        int end = text.indexOf("\n---", 3);
         if (end < 0) throw new IllegalArgumentException("Unclosed front matter: " + path);
-        Map<String, Object> meta = yaml.load(text.substring(4, end));
+        Map<String, Object> rawMeta = end <= 4 ? Map.of() : yaml.load(text.substring(4, end));
+        Map<String, Object> meta = new HashMap<>(rawMeta == null ? Map.of() : rawMeta);
+        String sourceKey = root.relativize(path).toString().replace('\\', '/');
+        Map<String,Object> entry = (Map<String,Object>) ((Map<String,Object>) contentIndex.getOrDefault("notes", Map.of())).getOrDefault(sourceKey, Map.of());
+        meta.putIfAbsent("id", entry.getOrDefault("id", "note-" + UUID.nameUUIDFromBytes(sourceKey.getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString()));
+        meta.putIfAbsent("date", entry.getOrDefault("date", java.time.LocalDate.now(ZoneId.of("Asia/Shanghai")).toString()));
+        meta.put("updated", entry.getOrDefault("updated", meta.getOrDefault("updated", meta.get("date"))));
         if (Boolean.TRUE.equals(meta.get("draft"))) return;
         String id = Objects.toString(meta.get("id"), "");
         if (!id.matches("[a-z][a-z0-9-]*") || !ids.add(id)) throw new IllegalArgumentException("Invalid or duplicate note id: " + id);
+        final Map<String,Object> noteMeta = meta;
         String directoryName = path.getParent().getFileName().toString();
         folders.stream().filter(f -> Objects.equals(f.get("name"), directoryName)).findFirst()
-                .ifPresent(f -> meta.put("folder", f.get("id")));
+                .ifPresent(f -> noteMeta.put("folder", f.get("id")));
         meta.put("title", path.getFileName().toString().replaceFirst("\\.md$", ""));
         if (!folderIds.contains(meta.get("folder"))) throw new IllegalArgumentException("Unknown folder in " + path);
         meta.putIfAbsent("order", 1000); meta.putIfAbsent("tags", List.of()); meta.putIfAbsent("pinned", false);
@@ -195,10 +217,6 @@ public final class SiteBuilder {
         meta.put("source", root.relativize(path).toString());
         meta.put("markdown", text.substring(end + 4).strip());
         meta.put("folderName", folders.stream().filter(f -> f.get("id").equals(meta.get("folder"))).findFirst().orElseThrow().get("name"));
-        for (var url : (List<?>) meta.getOrDefault("legacyUrls", List.of())) {
-            String legacy = decode(url.toString());
-            if (oldUrls.putIfAbsent(legacy, (String) meta.get("url")) != null) throw new IllegalArgumentException("Duplicate legacy URL: " + legacy);
-        }
         notes.add(meta);
     }
 
@@ -245,9 +263,6 @@ public final class SiteBuilder {
         Set<String> links = new HashSet<>();
         for (var a : doc.select("a[href]")) {
             String href = a.attr("href");
-            String local = href.replace(Objects.toString(site.get("url")), "");
-            String path = decode(local.split("#", 2)[0]);
-            if (oldUrls.containsKey(path)) href = oldUrls.get(path) + (local.contains("#") ? "#" + local.split("#", 2)[1] : "");
             a.attr("href", href);
             if (href.startsWith("/read/")) links.add(href.split("#", 2)[0]);
             if (href.startsWith("https://") || href.startsWith("http://")) a.attr("target", "_blank").attr("rel", "noopener noreferrer");

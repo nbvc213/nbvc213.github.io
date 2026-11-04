@@ -51,10 +51,6 @@ for (const item of search) {
   assert.ok(!item.anchor || htmlCache.get(file).includes(`id="${item.anchor}"`));
 }
 assert.ok(search.some(s => s.noteId === 'java-02' && s.section.includes('CLASSPATH')), 'inline code in heading must be searchable');
-for (const item of JSON.parse(await readFile('config/migration.json','utf8'))) {
-  const file = resolve(root,'.'+item.legacyUrl);
-  assert.ok((await readFile(file,'utf8')).includes(`/read/${item.id}/`));
-}
 const reader = await readFile(resolve(root,'read/java-10/index.html'),'utf8');
 const neighbors = reader.match(/<nav class="neighbor-notes"[\s\S]*?<\/nav>/)?.[0] || '';
 assert.ok(neighbors.includes('/read/java-09/') && neighbors.includes('/read/java-11/'), 'next and previous chapters must stay in the same topic');

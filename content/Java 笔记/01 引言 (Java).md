@@ -1,11 +1,6 @@
 ---
-id: java-01
-order: 1
 date: 2026-03-14
-updated: 2026-03-14
 tags: ["Java基础"]
-legacyUrls:
-  - "/java/笔记/2026-03-14-01-引言-(Java).html"
 ---
 
 ## 笔记编写规范

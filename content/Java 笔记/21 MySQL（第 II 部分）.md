@@ -1,11 +1,6 @@
 ---
-id: java-21
-order: 21
 date: 2026-08-17
-updated: 2026-08-17
 tags: ["MySQL"]
-legacyUrls:
-  - "/java/笔记/2026-08-17-21-MySQL-第-II-部分.html"
 ---
 
 ## 分组查询

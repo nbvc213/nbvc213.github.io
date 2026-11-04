@@ -1,8 +1,5 @@
 ---
-id: vue-course-day-1
-order: 1101
 date: 2026-11-01
-updated: 2026-11-02
 tags: [Vue, TypeScript, 前端开发]
 description: "从 HTML、CSS、JavaScript 出发，学习 Vue 工程、单文件组件、响应式、模板指令与账户查询页面。"
 draft: false

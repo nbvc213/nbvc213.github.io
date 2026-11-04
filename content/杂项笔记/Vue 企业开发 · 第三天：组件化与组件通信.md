@@ -1,8 +1,5 @@
 ---
-id: vue-course-day-3
-order: 1103
 date: 2026-11-01
-updated: 2026-11-02
 tags: [Vue, 组件化, 组件通信, 生命周期]
 description: "掌握组件创建、Props、Emit、组件双向绑定、插槽和生命周期，并了解组合式函数与路由。"
 draft: false

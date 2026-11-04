@@ -1,15 +1,12 @@
 ---
 date: 2026-11-01
 description: 通过账户管理案例，综合练习需求拆解、数据流追踪、查询分页、表单维护、组件通信与故障排查。
-id: vue-course-day-5
-order: 1105
 tags:
 - Vue
 - Vue 3
 - TypeScript
 - Element Plus
 - 综合实战
-updated: 2026-11-02
 ---
 
 ## 今日学习目标与时间安排

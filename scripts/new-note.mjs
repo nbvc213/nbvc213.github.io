@@ -1,5 +1,4 @@
 import {readFile,readdir,writeFile,stat} from 'node:fs/promises';
-import {randomUUID} from 'node:crypto';
 import {resolve,dirname} from 'node:path';
 const args=process.argv.slice(2);
 const option=key=>{const i=args.indexOf('--'+key);return i<0?undefined:args[i+1];};
@@ -8,9 +7,5 @@ const base=resolve('content');
 if(!folder||!title||dirname(resolve(base,folder))!==base||/[<>:"/\\|?*]/.test(title)||/[. ]$/.test(title))throw new Error('请指定中文分类目录和合法文件名，例如 --folder "Java 笔记" --title "新笔记"；冒号等请用全角字符。');
 const directory=resolve(base,folder);
 if(!(await stat(directory)).isDirectory())throw new Error('分类目录不存在');
-let order=0;
-for(const name of await readdir(directory))if(name.endsWith('.md'))order=Math.max(order,Number((await readFile(resolve(directory,name),'utf8')).match(/^order:\s*(\d+)/m)?.[1]||0));
-const id='note-'+randomUUID().slice(0,8);
-const date=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-await writeFile(resolve(directory,title+'.md'),`---\nid: ${id}\norder: ${order+1}\ndate: ${date}\ndraft: true\n---\n\n## 开始记录\n\n`,{flag:'wx'});
+await writeFile(resolve(directory,title+'.md'),`---\ndraft: true\n---\n\n## 开始记录\n\n`,{flag:'wx'});
 console.log('已创建草稿：'+resolve(directory,title+'.md')+'；完成后删除 draft: true 即可发布。');

@@ -1,11 +1,6 @@
 ---
-id: misc-2eab29a3
-order: 2
 date: 2025-12-25
-updated: 2025-12-25
 tags: ["环境配置", "C++"]
-legacyUrls:
-  - "/杂项笔记/2025-12-25-安装-MIRACL-(Visual-Studio-2026).html"
 ---
 
 ## 从 GitHub 下载并解压源码

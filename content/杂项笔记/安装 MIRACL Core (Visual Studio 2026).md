@@ -1,11 +1,6 @@
 ---
-id: misc-ebb84b73
-order: 13
 date: 2026-05-10
-updated: 2026-05-10
 tags: ["环境配置", "C++"]
-legacyUrls:
-  - "/杂项笔记/2026-05-10-安装-MIRACL-Core-(Visual-Studio-2026).html"
 ---
 
 ## 从 GitHub 下载并解压源码

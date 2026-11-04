@@ -1,11 +1,6 @@
 ---
-id: java-18
-order: 18
 date: 2026-07-03
-updated: 2026-07-03
 tags: ["Java进阶"]
-legacyUrls:
-  - "/java/笔记/2026-07-03-18-Lambda&Stream-API.html"
 ---
 
 ## Lambda 表达式概述

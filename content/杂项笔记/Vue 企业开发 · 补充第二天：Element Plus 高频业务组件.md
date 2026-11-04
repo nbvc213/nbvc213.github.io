@@ -1,8 +1,5 @@
 ---
-id: vue-course-supplement-day-2
-order: 1107
 date: 2026-11-03
-updated: 2026-11-03
 tags: [Vue, TypeScript, Element Plus, Dialog, MessageBox, DatePicker, Tabs, Table]
 description: "通过银行账户和交易查询场景，学习弹窗、消息确认、表单选项、日期区间、标签页、加载状态和表格批量操作。"
 draft: false

@@ -1,8 +1,5 @@
 ---
-id: vue-course-supplement-day-4
-order: 1109
 date: 2026-11-03
-updated: 2026-11-03
 tags: [Vue, TypeScript, Axios, 请求取消, 请求竞态, 服务端分页, 文件上传, 文件下载]
 description: "通过可在本地运行的银行账户接口，掌握请求取消、响应乱序、统一错误处理、登录失效、服务端分页与排序、文件上传下载及接口验收。"
 draft: false

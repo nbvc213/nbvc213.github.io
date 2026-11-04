@@ -1,11 +1,6 @@
 ---
-id: misc-79447627
-order: 1
 date: 2024-08-05
-updated: 2024-08-05
 tags: ["建站实践"]
-legacyUrls:
-  - "/杂项笔记/2024-08-05-GitHub-Page-+-Jekyll-建立云笔记.html"
 ---
 
 ## 在 GitHub 上创建仓库

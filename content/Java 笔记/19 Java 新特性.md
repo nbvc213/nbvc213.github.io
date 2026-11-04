@@ -1,11 +1,6 @@
 ---
-id: java-19
-order: 19
 date: 2026-07-07
-updated: 2026-07-07
 tags: ["Java进阶"]
-legacyUrls:
-  - "/java/笔记/2026-07-07-19-Java-新特性.html"
 ---
 
 ## Java 新语法

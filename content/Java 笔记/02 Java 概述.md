@@ -1,12 +1,7 @@
 ---
-id: java-02
-order: 2
 date: 2026-03-14
-updated: 2026-03-14
 tags: ["Java基础"]
 pinned: true
-legacyUrls:
-  - "/java/笔记/2026-03-14-02-Java-概述.html"
 ---
 
 ## 计算机概述

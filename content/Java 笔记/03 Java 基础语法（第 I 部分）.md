@@ -1,11 +1,6 @@
 ---
-id: java-03
-order: 3
 date: 2026-03-16
-updated: 2026-03-16
 tags: ["Java基础"]
-legacyUrls:
-  - "/java/笔记/2026-03-16-03-Java-基础语法-第-I-部分.html"
 ---
 
 ## Java 注释

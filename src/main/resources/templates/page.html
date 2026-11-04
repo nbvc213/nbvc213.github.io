@@ -4,9 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title th:text="${kind == 'home' ? site.title : title + ' · ' + site.title}">nbvc213's Notes</title>
-  <meta name="description" th:content="${note != null ? note.description : site.description}">
   <meta property="og:title" th:content="${title}">
-  <meta property="og:description" th:content="${note != null ? note.description : site.description}">
   <meta property="og:type" th:content="${kind == 'article' ? 'article' : 'website'}">
   <link rel="canonical" th:href="${site.url + url}">
   <link rel="icon" href="/media/favicon.svg" type="image/svg+xml">
@@ -43,7 +41,7 @@
 
 <main id="main" class="collection-shell" th:if="${kind == 'list' || kind == 'folder' || kind == 'library'}">
   <div class="breadcrumb"><a href="/">首页</a><span>/</span><span th:text="${title}"></span></div>
-  <section class="collection-hero"><h1 th:text="${title}"></h1><p th:if="${kind == 'folder'}" th:text="${folder.description}"></p></section>
+  <section class="collection-hero"><h1 th:text="${title}"></h1></section>
   <div id="collection"></div>
   <noscript><ul><li th:each="n : ${notes}" th:if="${folder == null || n.folder == folder.id}"><a th:href="${n.url}" th:text="${n.title}"></a></li></ul></noscript>
 </main>

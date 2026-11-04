@@ -1,8 +1,5 @@
 ---
-id: vue-course-day-4
-order: 1104
 date: 2026-11-01
-updated: 2026-11-02
 tags: [Vue, TypeScript, Vite, Axios, Pinia, HTTP]
 description: "理解 Vite 工程入口、模块调用、异步请求、Axios、Network 调试与 Pinia 状态管理。"
 draft: false

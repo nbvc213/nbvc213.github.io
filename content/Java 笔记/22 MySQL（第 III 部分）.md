@@ -1,11 +1,6 @@
 ---
-id: java-22
-order: 22
 date: 2026-08-22
-updated: 2026-08-22
 tags: ["MySQL"]
-legacyUrls:
-  - "/java/笔记/2026-08-22-22-MySQL-第-III-部分.html"
 ---
 
 ## MySQL 的使用

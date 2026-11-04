@@ -1,8 +1,5 @@
 ---
-id: vue-course-day-2
-order: 1102
 date: 2026-11-01
-updated: 2026-11-02
 tags: [Vue, TypeScript, Element Plus]
 description: "掌握业务类型、响应式派生数据、表格分页与表单校验。"
 draft: false

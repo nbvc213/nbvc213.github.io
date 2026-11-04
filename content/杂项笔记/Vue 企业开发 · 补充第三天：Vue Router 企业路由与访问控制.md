@@ -1,8 +1,5 @@
 ---
-id: vue-course-supplement-day-3
-order: 1108
 date: 2026-11-03
-updated: 2026-11-03
 tags: [Vue, TypeScript, Vue Router, 路由守卫, 嵌套路由, 权限控制]
 description: "使用账户管理和业务办理页面，掌握嵌套路由、命名导航、参数、路由元信息、导航守卫、懒加载、404、离开确认与动态路由。"
 draft: false

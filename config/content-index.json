@@ -1,0 +1,407 @@
+{
+  "folders": {
+    "Java 笔记": "java",
+    "银从笔记": "banking",
+    "杂项笔记": "miscellaneous",
+    "语法测试": "examples",
+    "Vue 速成笔记": "folder-655fac96fb3d977f9ece"
+  },
+  "notes": {
+    "content/Java 笔记/01 引言 (Java).md": {
+      "id": "java-01",
+      "date": "2026-03-14",
+      "updated": "2026-11-04",
+      "hash": "fc4639d2fa02c5788b95b4420cb316da4c4b5f44c30a37d80a0672dba162040b"
+    },
+    "content/Java 笔记/02 Java 概述.md": {
+      "id": "java-02",
+      "date": "2026-03-14",
+      "updated": "2026-11-04",
+      "hash": "c1bf6807767f540e65daf6b0904a055f643206dc37b3df5f0ea075d5caddf538"
+    },
+    "content/Java 笔记/03 Java 基础语法（第 I 部分）.md": {
+      "id": "java-03",
+      "date": "2026-03-16",
+      "updated": "2026-11-04",
+      "hash": "76a86f3f0bb122b1d7a50d8eb8474ff29b690f2961a9b695465a7c8c7a7f53f1"
+    },
+    "content/Java 笔记/04 Java 基础语法（第 II 部分）.md": {
+      "id": "java-04",
+      "date": "2026-03-20",
+      "updated": "2026-11-04",
+      "hash": "7cb559241e0f5fb33f7807bb27dd2128c7d0c2b8e2ff35cce215862a8a5e35c4"
+    },
+    "content/Java 笔记/05 IDEA 的使用.md": {
+      "id": "java-05",
+      "date": "2026-03-23",
+      "updated": "2026-11-04",
+      "hash": "5b8c9d210da8ae4886c85b0515a772848a61aed7f7ecfde1d9adadc16edc3c80"
+    },
+    "content/Java 笔记/06 面向对象编程（第 I 部分）.md": {
+      "id": "java-06",
+      "date": "2026-03-23",
+      "updated": "2026-11-04",
+      "hash": "5fc8dbfdd41bfb23b58160d087f4e68fadfe642a1892daee8e5f49e19ce4df1e"
+    },
+    "content/Java 笔记/07 面向对象编程（第 II 部分）.md": {
+      "id": "java-07",
+      "date": "2026-04-03",
+      "updated": "2026-11-04",
+      "hash": "9bf0476e203dd365e30365241b0badadd13774309a28603baf9383e92928cd80"
+    },
+    "content/Java 笔记/08 数组.md": {
+      "id": "java-08",
+      "date": "2026-04-13",
+      "updated": "2026-11-04",
+      "hash": "b19c0ebea16d6c64923d47a07cc80498d397cc61f50eb39f2e744a6ae58f8aed"
+    },
+    "content/Java 笔记/09 异常.md": {
+      "id": "java-09",
+      "date": "2026-04-19",
+      "updated": "2026-11-04",
+      "hash": "458f1ab9c77ff2084d4945fa37c96c43cde775cdf2ce20b505ae5597dada46cb"
+    },
+    "content/Java 笔记/10 常用类.md": {
+      "id": "java-10",
+      "date": "2026-04-21",
+      "updated": "2026-11-04",
+      "hash": "4cd4d0879657ac43720352819d0d66cc8e2d04083db09b8926863be882677a27"
+    },
+    "content/Java 笔记/11 泛型.md": {
+      "id": "java-11",
+      "date": "2026-05-19",
+      "updated": "2026-11-04",
+      "hash": "0d10124caaf8525b0df92160fb6305b037fcc1dc90f62e19e6d78ac0f5b6bb04"
+    },
+    "content/Java 笔记/12 集合.md": {
+      "id": "java-12",
+      "date": "2026-05-19",
+      "updated": "2026-11-04",
+      "hash": "3555929bac7fc61e0df692c2eb11316a50b874b6afb9ccf9821e2f031d49e6e1"
+    },
+    "content/Java 笔记/13 IO.md": {
+      "id": "java-13",
+      "date": "2026-05-31",
+      "updated": "2026-11-04",
+      "hash": "7570965bb58a634a26e54cbb4410580ede4a2d6a54f4812107bc4ed3cb413b5d"
+    },
+    "content/Java 笔记/14 多线程.md": {
+      "id": "java-14",
+      "date": "2026-06-03",
+      "updated": "2026-11-04",
+      "hash": "0e75cfdac5fb0b396419f2c68a6217f288078934cf5c021aee6b3754c3d3204c"
+    },
+    "content/Java 笔记/15 网络编程.md": {
+      "id": "java-15",
+      "date": "2026-06-30",
+      "updated": "2026-11-04",
+      "hash": "57c68b030a0598a572141796383f846b751c1a1f6f43fa5f217ced108b8cf4b0"
+    },
+    "content/Java 笔记/16 反射.md": {
+      "id": "java-16",
+      "date": "2026-06-30",
+      "updated": "2026-11-04",
+      "hash": "d93eb5c55b2f78934d84e18b5d61ded3465b364f8d1e039afe139351b806a36f"
+    },
+    "content/Java 笔记/17 注解.md": {
+      "id": "java-17",
+      "date": "2026-07-03",
+      "updated": "2026-11-04",
+      "hash": "91ca6fda1a44c51dab82e753894a59d1c61c9af92adaf33021f1980a0e8ac551"
+    },
+    "content/Java 笔记/18 Lambda&Stream API.md": {
+      "id": "java-18",
+      "date": "2026-07-03",
+      "updated": "2026-11-04",
+      "hash": "9bf9bf143865c2028e9e2c209b26f43fd770773b140049bac8ccbbb5b13d591a"
+    },
+    "content/Java 笔记/19 Java 新特性.md": {
+      "id": "java-19",
+      "date": "2026-07-07",
+      "updated": "2026-11-04",
+      "hash": "a0b602c69dd3ddebdabd84fd0c32d13164b934f7fb80d88d2eb42fb1d3869632"
+    },
+    "content/Java 笔记/20 MySQL（第 I 部分）.md": {
+      "id": "java-20",
+      "date": "2026-07-12",
+      "updated": "2026-11-04",
+      "hash": "a5efed650eed004f5c0b67f03b0b31c7786d3be821275b7862d8b42972f9bf16"
+    },
+    "content/Java 笔记/21 MySQL（第 II 部分）.md": {
+      "id": "java-21",
+      "date": "2026-08-17",
+      "updated": "2026-11-04",
+      "hash": "51f30172c9ad6c88476a6cf5c675a01dc53bb3ff640b3fa092658bd0f66296a7"
+    },
+    "content/Java 笔记/22 MySQL（第 III 部分）.md": {
+      "id": "java-22",
+      "date": "2026-08-22",
+      "updated": "2026-11-04",
+      "hash": "e62cf2ac50df2efdd1f320a2a4d5308354b1faf6834414e6ce5e3af17e888297"
+    },
+    "content/Java 笔记/23 JDBC.md": {
+      "id": "java-23",
+      "date": "2026-08-29",
+      "updated": "2026-11-04",
+      "hash": "65e89d393a856ad3d8c95d48aa7b557c38dd8bf6f561e11733bc808b8b65feab"
+    },
+    "content/Java 笔记/24 HTML.md": {
+      "id": "java-24",
+      "date": "2026-09-05",
+      "updated": "2026-11-04",
+      "hash": "522b11b4de8527ea855a0b6843a4b0240dc98718d0bafac597414a96334d85d0"
+    },
+    "content/Java 笔记/25 CSS.md": {
+      "id": "java-25",
+      "date": "2026-09-06",
+      "updated": "2026-11-04",
+      "hash": "591c819532cecb552299991b570f79fdc124c3eafaf4bf5f995ce04e97043831"
+    },
+    "content/Java 笔记/26 JavaScript.md": {
+      "id": "java-26",
+      "date": "2026-09-13",
+      "updated": "2026-11-04",
+      "hash": "c98d22b5a9d30cf4519168b178e2d2b139593e1ab352489e22a6ac494f179ef1"
+    },
+    "content/杂项笔记/GitHub Page + Jekyll 建立云笔记.md": {
+      "id": "misc-79447627",
+      "date": "2024-08-05",
+      "updated": "2026-11-04",
+      "hash": "26606ab1d7bacc183f618e6cbb0b0f38bdff3d92c4e9a346922befc764126a21"
+    },
+    "content/杂项笔记/Vue 企业开发 · 第一天：从零读懂一个 Vue 页面.md": {
+      "id": "vue-course-day-1",
+      "date": "2026-11-01",
+      "updated": "2026-11-02",
+      "hash": "04ec0bb18dec9a3e4399d6c95c9a024534282e8945c937a37a258bc175a2b81b"
+    },
+    "content/杂项笔记/Vue 企业开发 · 第三天：组件化与组件通信.md": {
+      "id": "vue-course-day-3",
+      "date": "2026-11-01",
+      "updated": "2026-11-02",
+      "hash": "06fa9441aaa37300ec4e1d4d94636e457f78949025ec8968b4ab27b7a8e67692"
+    },
+    "content/杂项笔记/Vue 企业开发 · 第二天：类型、响应式与业务控件.md": {
+      "id": "vue-course-day-2",
+      "date": "2026-11-01",
+      "updated": "2026-11-02",
+      "hash": "0511d7f5cee583a821c112711ae895e027f9a3bc0a9157f8f4b5e093c2784586"
+    },
+    "content/杂项笔记/Vue 企业开发 · 第五天：账户业务维护实战.md": {
+      "id": "vue-course-day-5",
+      "date": "2026-11-01",
+      "updated": "2026-11-02",
+      "hash": "85abcd2c89960f09625df4f6ca725fb7b9c657d792dbd2bf802109f5e8c4192e"
+    },
+    "content/杂项笔记/Vue 企业开发 · 第四天：工程、接口与排错.md": {
+      "id": "vue-course-day-4",
+      "date": "2026-11-01",
+      "updated": "2026-11-02",
+      "hash": "dea3f4e8d9cd820e8e56caaf624e0c32a679342c7f0931d622f958457d9f914e"
+    },
+    "content/杂项笔记/Vue 企业开发 · 补充第一天：组件进阶与模板实用语法.md": {
+      "id": "vue-course-supplement-day-1",
+      "date": "2026-11-03",
+      "updated": "2026-11-03",
+      "hash": "2c8a60eb450a364265db818630bf35096685c84614cfc7e988b609d4bc112520"
+    },
+    "content/杂项笔记/Vue 企业开发 · 补充第三天：Vue Router 企业路由与访问控制.md": {
+      "id": "vue-course-supplement-day-3",
+      "date": "2026-11-03",
+      "updated": "2026-11-03",
+      "hash": "2e25acd4fe2a5fd0fafaf28042daac74a6d8616b5eab2dd7cc1f925b1ca046b4"
+    },
+    "content/杂项笔记/Vue 企业开发 · 补充第二天：Element Plus 高频业务组件.md": {
+      "id": "vue-course-supplement-day-2",
+      "date": "2026-11-03",
+      "updated": "2026-11-03",
+      "hash": "bf7208dc39d7dcb9af5a94f1d3199ae0f9adebdc1ab2d0e17f0d6f3975655538"
+    },
+    "content/杂项笔记/Vue 企业开发 · 补充第五天：工程规范、调试、类型与测试.md": {
+      "id": "vue-course-supplement-day-5",
+      "date": "2026-11-03",
+      "updated": "2026-11-03",
+      "hash": "348affc1a8f1a7aeea37f71215d9b3c5cb7aa57263424e317defff2edbcbcca6"
+    },
+    "content/杂项笔记/Vue 企业开发 · 补充第四天：Axios 真实接口联调与请求管理.md": {
+      "id": "vue-course-supplement-day-4",
+      "date": "2026-11-03",
+      "updated": "2026-11-03",
+      "hash": "4b7a3b0eda016f06a5ac0562945c9af5ccd5f48aa4b795812d7e5770bbabf52c"
+    },
+    "content/杂项笔记/安装 MIRACL (Visual Studio 2026).md": {
+      "id": "misc-2eab29a3",
+      "date": "2025-12-25",
+      "updated": "2026-11-04",
+      "hash": "4d008cc279ccb69525133bf1c4b760d4e30f2a88f856cae19adb3ca1cf0a7681"
+    },
+    "content/杂项笔记/安装 MIRACL Core (Visual Studio 2026).md": {
+      "id": "misc-ebb84b73",
+      "date": "2026-05-10",
+      "updated": "2026-11-04",
+      "hash": "45846186f64d3d529452a48e7d714810ab903dd07f9a4ac996243cd4d686ab5e"
+    },
+    "content/语法测试/语法测试 01 · 排版、标题与链接.md": {
+      "id": "syntax-basics",
+      "date": "2026-10-28",
+      "updated": "2026-10-28",
+      "hash": "db6efb6ffc43548e10bff5387f727ce55752ece566472dca6695c10d32558a3b"
+    },
+    "content/语法测试/语法测试 02 · 提示、示例与练习.md": {
+      "id": "syntax-callouts",
+      "date": "2026-10-28",
+      "updated": "2026-10-28",
+      "hash": "1d199401aa0f8ae0948504eeb5e90f388c35ea6db769685001fabe08a7eb3dca"
+    },
+    "content/语法测试/语法测试 03 · 代码、公式与图表.md": {
+      "id": "syntax-code",
+      "date": "2026-10-28",
+      "updated": "2026-10-28",
+      "hash": "13a4b4b5ce08c439966174d25d3dd857ee472031b4110dbbc47dfad5f7566c3d"
+    },
+    "content/银从笔记/50 初级银从法律法规 - 1.1 经济基础知识.md": {
+      "id": "banking-50",
+      "date": "2026-10-12",
+      "updated": "2026-11-04",
+      "hash": "79b4335a605629914d680652916c36cb2ee01443abe51acc33e2f78251f63e30"
+    },
+    "content/银从笔记/51 初级银从法律法规 - 1.2 金融基础知识.md": {
+      "id": "banking-51",
+      "date": "2026-10-12",
+      "updated": "2026-11-04",
+      "hash": "91947144936641fe618263bf76ec999d35e8e3ac64016dbfe71f9afe29b46443"
+    },
+    "content/银从笔记/52 初级银从法律法规 - 1.3 金融市场.md": {
+      "id": "banking-52",
+      "date": "2026-10-12",
+      "updated": "2026-11-04",
+      "hash": "97d079cefee7e122567171b2381d2c3748f3d7613afbbb2a04a3ef113bf22d8e"
+    },
+    "content/银从笔记/53 初级银从法律法规 - 1.4 银行体系.md": {
+      "id": "banking-53",
+      "date": "2026-10-12",
+      "updated": "2026-11-04",
+      "hash": "5a47ae9b581c0538188f9ea4e1ec7b84b82a67e9d884f133071dbd915008ae40"
+    },
+    "content/银从笔记/54 初级银从法律法规 - 2.1 存款业务.md": {
+      "id": "banking-54",
+      "date": "2026-10-13",
+      "updated": "2026-11-04",
+      "hash": "0cc177f9d0c24b025ca22ee16cb31a65ce45a263897dd9ae51504da2e45f31a1"
+    },
+    "content/银从笔记/55 初级银从法律法规 - 2.2 贷款业务.md": {
+      "id": "banking-55",
+      "date": "2026-10-13",
+      "updated": "2026-11-04",
+      "hash": "bc32d6b00874341bdac0e1dfb685bbc5e805bf65faa71f99681ac764698a631e"
+    },
+    "content/银从笔记/56 初级银从法律法规 - 2.3 结算、代理及托管业务.md": {
+      "id": "banking-56",
+      "date": "2026-10-15",
+      "updated": "2026-11-04",
+      "hash": "b9a8c66ba3cf7b53c6cbb52a5b44ec6023303747a223ef08917edddb168e0d3f"
+    },
+    "content/银从笔记/57 初级银从法律法规 - 2.6 银行卡业务.md": {
+      "id": "banking-57",
+      "date": "2026-10-15",
+      "updated": "2026-11-04",
+      "hash": "d8b11bd23e092436007f97a326ee17ee34590d4084fcd0176147827e8984102d"
+    },
+    "content/银从笔记/58 初级银从法律法规 - 2.7 理财与同业业务.md": {
+      "id": "banking-58",
+      "date": "2026-10-15",
+      "updated": "2026-11-04",
+      "hash": "cdb1a9721e1677803c3d1020ce0da9af81b834c4a182ccf7feaa162cc9fa5c50"
+    },
+    "content/银从笔记/59 初级银从法律法规 - 3.1 银行管理基础.md": {
+      "id": "banking-59",
+      "date": "2026-10-15",
+      "updated": "2026-11-04",
+      "hash": "f5396b79f774466ca8939cf9df1c8c152ad873b181befa13a025b2c0ed60f95a"
+    },
+    "content/银从笔记/60 初级银从法律法规 - 3.2 公司治理、内部控制与合规管理.md": {
+      "id": "banking-60",
+      "date": "2026-10-15",
+      "updated": "2026-11-04",
+      "hash": "344b8fd5afbc0921c7d8bd363b9e0b612ece5c8abd033643a917df5c6bdc9ef2"
+    },
+    "content/银从笔记/61 初级银从法律法规 - 3.3 商业银行资产负债管理.md": {
+      "id": "banking-61",
+      "date": "2026-10-15",
+      "updated": "2026-11-04",
+      "hash": "6776a367f8c3c1e4046b58fbae1949fa6720fa870930231c4aa4bcc166a812a8"
+    },
+    "content/银从笔记/63 初级银从法律法规 - 3.5 风险管理.md": {
+      "id": "banking-63",
+      "date": "2026-10-18",
+      "updated": "2026-11-04",
+      "hash": "c06e77961682e8bcf3ba11f639adb408a7ffb58a9d2248af42ac4b1c8df13d0a"
+    },
+    "content/银从笔记/72 初级银从法律法规 - 高频考点.md": {
+      "id": "banking-72",
+      "date": "2026-10-18",
+      "updated": "2026-11-04",
+      "hash": "9597c7cc0b55a99aec0e4c60c8fdd17be1217f872e05ec21515c1da287090976"
+    },
+    "content/Vue 速成笔记/Vue 企业开发 · 第 1 天：从零读懂一个 Vue 页面.md": {
+      "id": "note-be96e1f811e80014d67e2c65",
+      "date": "2026-11-04",
+      "updated": "2026-11-04",
+      "hash": "04ec0bb18dec9a3e4399d6c95c9a024534282e8945c937a37a258bc175a2b81b"
+    },
+    "content/Vue 速成笔记/Vue 企业开发 · 第 2 天：类型、响应式与业务控件.md": {
+      "id": "note-dc5564b6a4a66dbb6cc308ac",
+      "date": "2026-11-04",
+      "updated": "2026-11-04",
+      "hash": "0511d7f5cee583a821c112711ae895e027f9a3bc0a9157f8f4b5e093c2784586"
+    },
+    "content/Vue 速成笔记/Vue 企业开发 · 第 3 天：组件化与组件通信.md": {
+      "id": "note-a795f0372a98ac35504df4e8",
+      "date": "2026-11-04",
+      "updated": "2026-11-04",
+      "hash": "06fa9441aaa37300ec4e1d4d94636e457f78949025ec8968b4ab27b7a8e67692"
+    },
+    "content/Vue 速成笔记/Vue 企业开发 · 第 4 天：工程、接口与排错.md": {
+      "id": "note-3f938ada4dbc84d3a23f6594",
+      "date": "2026-11-04",
+      "updated": "2026-11-04",
+      "hash": "dea3f4e8d9cd820e8e56caaf624e0c32a679342c7f0931d622f958457d9f914e"
+    },
+    "content/Vue 速成笔记/Vue 企业开发 · 第 5 天：账户业务维护实战.md": {
+      "id": "note-81fbdeb032aa2fc680d46a5c",
+      "date": "2026-11-04",
+      "updated": "2026-11-04",
+      "hash": "85abcd2c89960f09625df4f6ca725fb7b9c657d792dbd2bf802109f5e8c4192e"
+    },
+    "content/Vue 速成笔记/Vue 企业开发 · 补充第 1 天：组件进阶与模板实用语法.md": {
+      "id": "note-c179362018a7daf247b4d4a7",
+      "date": "2026-11-04",
+      "updated": "2026-11-04",
+      "hash": "2c8a60eb450a364265db818630bf35096685c84614cfc7e988b609d4bc112520"
+    },
+    "content/Vue 速成笔记/Vue 企业开发 · 补充第 2 天：Element Plus 高频业务组件.md": {
+      "id": "note-4a8a8fcb73e8cfca76afa601",
+      "date": "2026-11-04",
+      "updated": "2026-11-04",
+      "hash": "bf7208dc39d7dcb9af5a94f1d3199ae0f9adebdc1ab2d0e17f0d6f3975655538"
+    },
+    "content/Vue 速成笔记/Vue 企业开发 · 补充第 3 天：Vue Router 企业路由与访问控制.md": {
+      "id": "note-707ecb18ca0d49c1436803c0",
+      "date": "2026-11-04",
+      "updated": "2026-11-04",
+      "hash": "2e25acd4fe2a5fd0fafaf28042daac74a6d8616b5eab2dd7cc1f925b1ca046b4"
+    },
+    "content/Vue 速成笔记/Vue 企业开发 · 补充第 4 天：Axios 真实接口联调与请求管理.md": {
+      "id": "note-f5ed530aacc3a6ebed526a7b",
+      "date": "2026-11-04",
+      "updated": "2026-11-04",
+      "hash": "4b7a3b0eda016f06a5ac0562945c9af5ccd5f48aa4b795812d7e5770bbabf52c"
+    },
+    "content/Vue 速成笔记/Vue 企业开发 · 补充第 5 天：工程规范、调试、类型与测试.md": {
+      "id": "note-9911bc0f2a6457fa217f75f2",
+      "date": "2026-11-04",
+      "updated": "2026-11-04",
+      "hash": "348affc1a8f1a7aeea37f71215d9b3c5cb7aa57263424e317defff2edbcbcca6"
+    }
+  }
+}

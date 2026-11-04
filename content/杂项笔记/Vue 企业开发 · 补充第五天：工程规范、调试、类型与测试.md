@@ -1,8 +1,5 @@
 ---
-id: vue-course-supplement-day-5
-order: 1110
 date: 2026-11-03
-updated: 2026-11-03
 tags: [Vue, TypeScript, Vue DevTools, ESLint, Prettier, vue-tsc, SCSS, Vitest, 工程化]
 description: "通过账户业务案例，掌握 Vue 调试、TypeScript 工具类型、静态检查、格式化、组件样式、自动化测试及构建交付。"
 draft: false

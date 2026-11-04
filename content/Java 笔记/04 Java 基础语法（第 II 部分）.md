@@ -1,11 +1,6 @@
 ---
-id: java-04
-order: 4
 date: 2026-03-20
-updated: 2026-03-20
 tags: ["Java基础"]
-legacyUrls:
-  - "/java/笔记/2026-03-20-04-Java-基础语法-第-II-部分.html"
 ---
 
 ## 控制语句

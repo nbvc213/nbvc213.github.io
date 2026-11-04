@@ -1,11 +1,6 @@
 ---
-id: java-20
-order: 20
 date: 2026-07-12
-updated: 2026-07-12
 tags: ["MySQL"]
-legacyUrls:
-  - "/java/笔记/2026-07-12-20-MySQL-第-I-部分.html"
 ---
 
 ## 数据库基础

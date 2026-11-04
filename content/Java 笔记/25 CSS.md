@@ -1,11 +1,6 @@
 ---
-id: java-25
-order: 25
 date: 2026-09-06
-updated: 2026-09-06
 tags: ["Web基础"]
-legacyUrls:
-  - "/java/笔记/2026-09-06-25-CSS.html"
 ---
 
 ## CSS 简介

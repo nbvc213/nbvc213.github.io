@@ -16,6 +16,7 @@ try{
  if(!branch||branch!==defaultBranch)throw new Error('请先切换到默认分支：'+defaultBranch);
  if(!checkOnly&&git(['diff','--cached','--quiet'],[0,1]).code===1)throw new Error('存在预先暂存的修改，请先完成或取消暂存后重试。');
  if(!existsSync('node_modules'))npmTask('ci');
+ if(!checkOnly){const sync=spawnSync(process.execPath,['scripts/sync-content.mjs','--update'],{stdio:'inherit'});if(sync.error||sync.status!==0)throw new Error('更新时间失败');}
  npmTask('run build');npmTask('run test:content');npmTask('run check:release');
  if(checkOnly){console.log('检查完成：未提交、未推送、未触发部署。');process.exit(0);}
  console.log('检查远端更新……');

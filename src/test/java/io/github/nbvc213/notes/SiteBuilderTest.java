@@ -37,7 +37,7 @@ class SiteBuilderTest {
         Files.createDirectories(directory.resolve("dist/assets/.vite"));
         Files.writeString(directory.resolve("config/site.yml"), "title: Test\nurl: https://example.test\ndescription: Test\nfolders:\n  - id: java\n    name: Java\n    eyebrow: JAVA\n    description: Test\n    color: green\n");
         Files.writeString(directory.resolve("dist/assets/.vite/manifest.json"), "{\"web/main.ts\":{\"css\":[\"app.css\"]}}");
-        Files.writeString(directory.resolve("content/Java/文件名即标题.md"), "---\nid: java-01\ndate: 2026-01-01\nlegacyUrls: [/old.html]\n---\n\n## 环境变量 `CLASSPATH`\n\n正文 $a_b < c$。\n\n[站内链接](/read/java-01/#环境变量-classpath)\n\n<script>alert('x')</script>\n\n<img src=\"x.png\" onerror=\"alert(1)\">\n");
+        Files.writeString(directory.resolve("content/Java/文件名即标题.md"), "---\nid: java-01\ndate: 2026-01-01\n---\n\n## 环境变量 `CLASSPATH`\n\n正文 $a_b < c$。\n\n[站内链接](/read/java-01/#环境变量-classpath)\n\n<script>alert('x')</script>\n\n<img src=\"x.png\" onerror=\"alert(1)\">\n");
         Files.writeString(directory.resolve("content/draft.md"), "---\nid: draft\ntitle: PRIVATE_DRAFT_SENTINEL\nfolder: java\ndate: 2026-01-01\ndraft: true\n---\nPRIVATE_DRAFT_SENTINEL");
         new SiteBuilder(directory).build();
         String html = Files.readString(directory.resolve("dist/read/java-01/index.html"));
@@ -49,7 +49,7 @@ class SiteBuilderTest {
         assertTrue(search.contains("环境变量 CLASSPATH"));
         assertFalse(search.contains("PRIVATE_DRAFT_SENTINEL"));
         assertFalse(Files.readString(directory.resolve("dist/data/catalog.json")).contains("PRIVATE_DRAFT_SENTINEL"));
-        assertTrue(Files.readString(directory.resolve("dist/old.html")).contains("location.hash"));
+        assertFalse(Files.exists(directory.resolve("dist/old.html")));
         // A malformed saved note must not erase the last readable website.
         String previousCatalog = Files.readString(directory.resolve("dist/data/catalog.json"));
         Files.writeString(directory.resolve("content/broken.md"), "missing front matter");
@@ -150,5 +150,19 @@ class SiteBuilderTest {
         assertTrue(doc.getElementById("child").selectFirst(".callout-title").text().equals("Child"));
         assertTrue(doc.select(".answer-block").isEmpty());
         assertTrue(doc.getElementById("inline").text().contains("这里只是标记的解释"));
+    }
+    @Test void discoversFoldersAndPlainMarkdownWithNaturalOrdering(@TempDir Path directory) throws Exception {
+        Files.createDirectories(directory.resolve("config"));
+        Files.createDirectories(directory.resolve("content/新分类"));
+        Files.createDirectories(directory.resolve("dist/assets/.vite"));
+        Files.writeString(directory.resolve("config/site.yml"), "title: Test\nurl: https://example.test\n");
+        Files.writeString(directory.resolve("dist/assets/.vite/manifest.json"), "{\"web/main.ts\":{\"css\":[\"app.css\"]}}");
+        Files.writeString(directory.resolve("content/新分类/10 后面的笔记.md"), "## 正文\n无须元数据");
+        Files.writeString(directory.resolve("content/新分类/2 前面的笔记.md"), "## 正文\n无须元数据");
+        new SiteBuilder(directory).build();
+        var catalog = new com.fasterxml.jackson.databind.ObjectMapper().readTree(Files.readString(directory.resolve("dist/data/catalog.json")));
+        assertEquals("新分类", catalog.get("folders").get(0).get("name").asText());
+        assertEquals("2 前面的笔记", catalog.get("notes").get(0).get("title").asText());
+        assertNotEquals(catalog.get("notes").get(0).get("id"), catalog.get("notes").get(1).get("id"));
     }
 }

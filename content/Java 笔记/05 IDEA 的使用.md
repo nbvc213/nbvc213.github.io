@@ -1,11 +1,6 @@
 ---
-id: java-05
-order: 5
 date: 2026-03-23
-updated: 2026-03-23
 tags: ["开发工具", "环境配置"]
-legacyUrls:
-  - "/java/笔记/2026-03-23-05-IDEA-的使用.html"
 ---
 
 ## IDEA 的介绍

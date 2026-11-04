@@ -1,11 +1,6 @@
 ---
-id: java-26
-order: 26
 date: 2026-09-13
-updated: 2026-09-13
 tags: ["Web基础"]
-legacyUrls:
-  - "/java/笔记/2026-09-13-26-JavaScript.html"
 ---
 
 ## JavaScript 概述

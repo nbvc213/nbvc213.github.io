@@ -1,11 +1,6 @@
 ---
-id: java-23
-order: 23
 date: 2026-08-29
-updated: 2026-08-29
 tags: ["JDBC", "数据库"]
-legacyUrls:
-  - "/java/笔记/2026-08-29-23-JDBC.html"
 ---
 
 ## JDBC 概述
