@@ -1,13 +1,7 @@
 ---
-id: vue-course-supplement-day-1
-title: "Vue 企业开发 · 补充第一天：组件进阶与模板实用语法"
-folder: miscellaneous
-order: 1106
 date: 2026-11-03
-updated: 2026-11-06
 tags: [Vue, TypeScript, 动态组件, KeepAlive, 模板引用, 自定义指令]
 description: "通过银行账户页面学习动态组件、组件缓存、defineOptions、defineExpose、nextTick、事件修饰符、动态样式和自定义指令。"
-pinned: false
 draft: false
 ---
 
