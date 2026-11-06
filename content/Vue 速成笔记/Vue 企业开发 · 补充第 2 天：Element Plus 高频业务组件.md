@@ -1,5 +1,5 @@
 ---
-date: 2026-11-03
+date: 2026-11-06
 tags: [Vue, TypeScript, Element Plus, Dialog, MessageBox, DatePicker, Tabs, Table]
 description: "通过银行账户和交易查询场景，学习弹窗、消息确认、表单选项、日期区间、标签页、加载状态和表格批量操作。"
 draft: false
@@ -13,16 +13,16 @@ draft: false
 
 本日使用 Vue 3 + TypeScript + Element Plus 2.6 及以上版本。为避免凭空增加后端依赖，所有主线示例使用组件内的模拟业务数据；只有注明“模拟异步”的例子才会通过 Promise 等待，**不会自动发送 HTTP 请求**。
 
-| 学习内容 | 建议时间 | 学习重点 |
-| --- | ---: | --- |
-| `el-dialog` 弹窗表单 | 20 分钟 | 显示控制、草稿、具名插槽、关闭处理 |
-| `ElMessage` 与 `ElMessageBox` | 15 分钟 | 结果提示与二次确认，区分取消和失败 |
-| Radio、Checkbox、Switch | 20 分钟 | 单选、多选、布尔开关、值类型 |
-| `el-date-picker` | 20 分钟 | 单日期、日期区间、`value-format` |
-| `el-tabs` / `el-tab-pane` | 15 分钟 | 标签名称、当前激活页、切换事件 |
-| `v-loading` | 10 分钟 | 请求开始显示，结束关闭 |
-| 表格多选与排序 | 20 分钟 | `selection-change`、本地排序、远程排序的区别 |
-| **主线合计** | **120 分钟** | |
+| 学习内容                      |     建议时间 | 学习重点                                     |
+| ----------------------------- | -----------: | -------------------------------------------- |
+| `el-dialog` 弹窗表单          |      20 分钟 | 显示控制、草稿、具名插槽、关闭处理           |
+| `ElMessage` 与 `ElMessageBox` |      15 分钟 | 结果提示与二次确认，区分取消和失败           |
+| Radio、Checkbox、Switch       |      20 分钟 | 单选、多选、布尔开关、值类型                 |
+| `el-date-picker`              |      20 分钟 | 单日期、日期区间、`value-format`             |
+| `el-tabs` / `el-tab-pane`     |      15 分钟 | 标签名称、当前激活页、切换事件               |
+| `v-loading`                   |      10 分钟 | 请求开始显示，结束关闭                       |
+| 表格多选与排序                |      20 分钟 | `selection-change`、本地排序、远程排序的区别 |
+| **主线合计**                  | **120 分钟** |                                              |
 
 表单自定义异步校验、弹窗高级关闭控制、复杂组件联动等内容放在后面的拓展章节，不计入主线两小时。
 
@@ -57,6 +57,10 @@ npm run dev
 ```
 
 **例子使用约定：** 除非明确指出需要多个文件，本日每一节的“完整程序”都可以单独替换 `src/App.vue` 运行。各节的 `App.vue` 是互相独立的，不要把多个 `<script setup>` 合并到同一个文件。
+
+本日每个主题按照 **业务作用 → 基础语法与关键属性/事件（附短代码）→ 完整可运行程序 → 紧接着说明如何操作和验证结果** 的顺序组织。验证说明直接放在完整程序后面，不另设与程序脱离的小节；综合程序使用的新组件或新属性，先在前文解释其作用和数据类型。
+
+**短代码片段用于解释某一个属性或事件，不要求直接替换整个 `App.vue`。** 需要直接运行时，请使用对应“完整程序”提供的全部 SFC 代码和文件路径。
 
 ### 先认识组件库 API 的三种形态
 
@@ -97,19 +101,64 @@ npm run dev
 
 ### Dialog 常用属性与事件
 
-| 写法 | 含义 | 常见用途 |
-| --- | --- | --- |
-| `v-model="visible"` | 控制显示与隐藏 | 编辑、新增、详情弹窗 |
-| `title="..."` | 设置标题 | 标明当前办理业务 |
-| `width="520px"` | 设置弹窗宽度 | 控制表单排版 |
-| `:close-on-click-modal="false"` | 点击遮罩不关闭 | 防止误操作丢失草稿 |
-| `:close-on-press-escape="false"` | 按 Esc 不关闭 | 避免业务表单意外退出 |
-| `destroy-on-close` | 关闭时销毁默认插槽的内容 | 关闭后不保留某些子组件内部状态 |
-| `@open` / `@closed` | 弹窗开始打开 / 完全关闭后的事件 | 做初始化日志、关闭收尾 |
-| `:before-close="handler"` | 内置关闭操作前调用处理函数 | 判断是否允许关闭；需要执行回调 `done()` 才真正关闭 |
-| `#footer` | 底部具名插槽 | 自定义取消、保存按钮 |
+| 写法                             | 含义                            | 常见用途                                           |
+| -------------------------------- | ------------------------------- | -------------------------------------------------- |
+| `v-model="visible"`              | 控制显示与隐藏                  | 编辑、新增、详情弹窗                               |
+| `title="..."`                    | 设置标题                        | 标明当前办理业务                                   |
+| `width="520px"`                  | 设置弹窗宽度                    | 控制表单排版                                       |
+| `:close-on-click-modal="false"`  | 点击遮罩不关闭                  | 防止误操作丢失草稿                                 |
+| `:close-on-press-escape="false"` | 按 Esc 不关闭                   | 避免业务表单意外退出                               |
+| `destroy-on-close`               | 关闭时销毁默认插槽的内容        | 关闭后不保留某些子组件内部状态                     |
+| `@open` / `@closed`              | 弹窗开始打开 / 完全关闭后的事件 | 做初始化日志、关闭收尾                             |
+| `:before-close="handler"`        | 内置关闭操作前调用处理函数      | 判断是否允许关闭；需要执行回调 `done()` 才真正关闭 |
+| `#footer`                        | 底部具名插槽                    | 自定义取消、保存按钮                               |
 
-本节先学习确定、直观的关闭方式：业务按钮由页面主动设置 `visible.value = false`；重要表单禁止点击遮罩或 Esc 直接关闭。`before-close` 的使用细节放在拓展部分。
+本节先学习确定、直观的关闭方式：业务按钮由页面主动设置 `visible.value = false`；重要表单可以禁止点击遮罩或 Esc 直接关闭。`before-close` 的详细调用方式放在后面的拓展部分。
+
+**控制关闭入口的示例：**
+
+```vue
+<el-dialog
+    v-model="visible"
+    title="账户编辑"
+    width="520px"
+    :close-on-click-modal="false"
+    :close-on-press-escape="false"
+    :show-close="!saving"
+>
+    <p>账户编辑内容</p>
+</el-dialog>
+```
+
+`close-on-click-modal` 决定点击遮罩能否关闭；`close-on-press-escape` 决定 Esc 能否关闭；`show-close` 决定右上角关闭图标是否可见。本例在 `saving=true` 时隐藏关闭图标；它不会自动禁用 footer 里的按钮，所以业务按钮仍需绑定 `:disabled="saving"` 或在函数中检查 `saving`。
+
+**Dialog 生命周期事件的示例：**
+
+```vue
+<el-dialog
+    v-model="visible"
+    @open="console.log('开始打开编辑弹窗')"
+    @closed="console.log('弹窗已经完全关闭')"
+>
+    <p>编辑内容</p>
+</el-dialog>
+```
+
+`@open` 在开始打开时触发；`@closed` 在关闭过渡结束后触发。不要把 `@closed` 理解为关闭按钮的点击事件，它描述的是弹窗完成关闭这一结果。
+
+**关闭时销毁内部表单的示例：**
+
+```vue
+<el-dialog v-model="visible" destroy-on-close>
+    <el-form ref="formRef" :model="draft">
+        <el-form-item label="账户名称" prop="name">
+            <el-input v-model="draft.name" />
+        </el-form-item>
+    </el-form>
+</el-dialog>
+```
+
+`destroy-on-close` 让对话框关闭时销毁默认插槽中的内容。**它不会把外层 `draft` 变量清空**，因此每次打开仍要主动初始化草稿；同时，弹窗关闭期间 `formRef` 可能尚未创建或已经被销毁，调用 `formRef.value?.validate()` 之前应检查是否存在。
 
 ### 业务草稿与原记录要分开
 
@@ -175,6 +224,7 @@ function openNew(): void {
     editingId.value = null;
     draft.name = '';
     draft.active = true;
+    formRef.value?.clearValidate(); // 防止快速切换时保留旧校验提示。
     visible.value = true;
 }
 
@@ -183,6 +233,7 @@ function openEdit(account: Account): void {
     // 逐字段复制，避免输入时提前修改表格原记录。
     draft.name = account.name;
     draft.active = account.active;
+    formRef.value?.clearValidate();
     visible.value = true;
 }
 
@@ -264,7 +315,15 @@ async function save(): Promise<void> {
                 <el-input v-model="draft.name" :disabled="saving" />
             </el-form-item>
             <el-form-item label="状态">
-                <el-switch v-model="draft.active" :disabled="saving" />
+                <!-- 这里先用原生复选框表达布尔值；稍后再讲 el-switch。 -->
+                <label>
+                    <input
+                        v-model="draft.active"
+                        type="checkbox"
+                        :disabled="saving"
+                    />
+                    启用账户
+                </label>
             </el-form-item>
         </el-form>
 
@@ -278,17 +337,25 @@ async function save(): Promise<void> {
 </template>
 ```
 
-这里用 `el-switch` 表示布尔开关。它是 Element Plus 组件，`v-model` 对应 `true`/`false`；后面会专门讲解它的参数。先把它看成一个可以切换启用状态的表单控件。
+**运行验证与预期结果：**
 
-运行后：点击“编辑”，修改姓名然后取消，表格必须保持原值；重新打开，再输入合法名称并保存，表格才更新。点击“新增”则打开空白草稿，保存后增加一条记录。
+1. 点击“编辑”，将“储蓄账户”修改为“理财账户”，但点击“取消”：表格仍显示“储蓄账户”，因为输入只修改 `draft`。
+2. 重新编辑同一行：表单再次从 `rows` 复制原姓名；输入合法名称并保存后，表格才更新。
+3. 点击“新增”：标题变为“新增账户”，姓名为空、原生复选框勾选；填写合法名称并保存，表格新增一条记录且 ID 不重复。
+4. 清空姓名或只输入一个字符后保存：校验不通过，弹窗保留且不会写入 `rows`。
+5. 开始保存时 `saving=true`，保存按钮出现 loading，其他关闭入口被限制；处理结束后 `finally` 恢复 `saving`。
 
-**关键细节：** `destroy-on-close` 会在弹窗关闭时销毁默认插槽内容，重新打开时表单实例重新建立。所以 `formRef` 在未显示或尚未渲染时可能是 `undefined`；`save()` 在读取表单实例前必须检查。这个示例没有访问真实接口，页面刷新后数据恢复初始值。
+**代码解释：** 这里使用的是原生 HTML `<input type="checkbox">`，`v-model` 直接绑定布尔值 `draft.active`。后文的 `el-switch` 是 Element Plus 提供的另一种布尔操作控件，本例没有提前引入它。`destroy-on-close` 会销毁 Dialog 默认插槽内的表单子树，但不会自动清空外层 `draft`；`formRef` 未创建或销毁后可能为 `undefined`，因此必须先检查再调用其方法。
+
+本例没有访问真实接口；页面刷新后内存数组恢复初始值。
 
 > [!EXERCISE] 取消按钮为什么不能直接修改 `rows`
 >
 > 用户打开编辑弹窗，把账户名称从“储蓄账户”改为“理财账户”，然后点击取消。页面应如何处理？
 >
-> 【答案】输入控件只修改 `draft.name`，取消时只把 `visible` 改为 `false`，不调用保存函数，不修改 `rows`。重新打开时再次从原记录复制字段，仍应显示“储蓄账户”。
+> 【答案】
+>
+> 输入控件只修改 `draft.name`，取消时只把 `visible` 改为 `false`，不调用保存函数，不修改 `rows`。重新打开时再次从原记录复制字段，仍应显示“储蓄账户”。
 
 ## 消息提示与二次确认：`ElMessage`、`ElMessageBox`
 
@@ -347,6 +414,24 @@ await ElMessageBox.confirm('确定删除这条记录吗？', '删除确认', {
 - 用户取消或关闭弹框后，Promise 会拒绝，这表达的是**用户选择取消**，不等于服务器操作失败。
 
 因此，删除业务的执行顺序应是：**先询问是否确认，再真正修改数据**。不要在弹框打开之前就删除记录。
+
+**先看最小确认与取消分支：**
+
+```ts
+async function askBeforeDelete(): Promise<void> {
+    try {
+        await ElMessageBox.confirm('确定删除吗？', '请确认');
+    } catch {
+        // 用户取消确认流程，提前结束，不进入后续删除操作。
+        return;
+    }
+
+    // 只有确认成功，才会执行这里的业务逻辑。
+    ElMessage.success('用户已确认，可以执行删除流程');
+}
+```
+
+`ElMessageBox.confirm()` 返回 Promise；取消会导致等待表达式抛出拒绝原因，因此不能把它和后续真实接口失败放在一个不加区分的 `catch` 中。本例只演示确认流程，尚未删除任何记录。
 
 ### 完整程序：删除前确认、删除后提示
 
@@ -429,7 +514,14 @@ async function removeAccount(id: number): Promise<void> {
 </template>
 ```
 
-这段代码特意把两种 `catch` 分开：第一次只处理用户在确认框中的取消行为；第二次处理真正删除阶段的异常。这样不会出现“用户点取消，却被当作接口失败”的错误反馈。
+**运行验证与预期结果：**
+
+1. 点击“储蓄账户”一行的“删除”，只显示确认框，表格记录还没有减少。
+2. 点击“取消”，确认框消失，原记录仍在，提示“已取消删除”。
+3. 再次点击“删除”并确认，只有 ID 101 被移除，页面提示“删除成功”，ID 102 不受影响。
+4. 若想验证数据层的失败分支，可临时把 `const exists = ...` 后的判断改成 `throw new Error('模拟删除失败')`；重新确认后应提示删除失败，并保留表格记录。完成后恢复原代码。
+
+**执行过程说明：** 代码特意把两种 `catch` 分开：第一次只处理用户在确认框中的取消行为；第二次处理真正删除阶段的异常。这样不会出现“用户点取消，却被当作接口失败”的错误反馈。
 
 在企业项目中，如果删除请求超时，不能仅凭前端没有收到响应就断定后端一定没有删除成功。真实删除还需要根据接口设计和重新查询结果判断，不能鼓励用户盲目重复提交。
 
@@ -437,7 +529,9 @@ async function removeAccount(id: number): Promise<void> {
 >
 > 用户点击删除后按“取消”，为什么不应该提示“删除接口失败”？
 >
-> 【答案】取消发生在确认阶段，还没有调用删除逻辑。`ElMessageBox.confirm()` 的 Promise 被拒绝只表示确认流程没有继续；真正接口失败应由确认之后的删除阶段单独处理。
+> 【答案】
+>
+> 取消发生在确认阶段，还没有调用删除逻辑。`ElMessageBox.confirm()` 的 Promise 被拒绝只表示确认流程没有继续；真正接口失败应由确认之后的删除阶段单独处理。
 
 ## 单选、多选与开关：`el-radio`、`el-checkbox`、`el-switch`
 
@@ -469,6 +563,27 @@ async function removeAccount(id: number): Promise<void> {
 
 在 Element Plus 2.6 及以上，推荐用 `value` 明确指定选项值；旧版本曾将 `label` 同时作为选项值，这种旧用法已经废弃。**阅读旧项目时要先核对组件库版本。**
 
+例如，单选值变化时同步更新页面说明：
+
+```vue
+<el-radio-group v-model="accountType" @change="onAccountTypeChange">
+    <el-radio value="personal">个人账户</el-radio>
+    <el-radio value="company">企业账户</el-radio>
+</el-radio-group>
+```
+
+```ts
+import { ref } from 'vue';
+
+const accountType = ref<'personal' | 'company'>('personal');
+
+function onAccountTypeChange(value: string | number | boolean): void {
+    console.log('当前选择的账户类型：', value);
+}
+```
+
+这里的 `@change` 用于**用户切换选择后的处理**；实际保存值由 `v-model` 和每个选项的 `value` 决定。
+
 ### Checkbox：单个布尔勾选与多选数组
 
 单个复选框可以表示“是否同意”：
@@ -496,6 +611,27 @@ const channels = ref<string[]>(['sms']);
 
 选中“站内消息”后，数组会包含 `'sms'` 和 `'inbox'`。用户看到的文字与真正保存的 `value` 应分别理解。`@change` 事件可以取得更新后的选中值集合。
 
+**监听多选结果的示例：**
+
+```vue
+<el-checkbox-group v-model="channels" @change="onChannelsChange">
+    <el-checkbox value="sms">短信</el-checkbox>
+    <el-checkbox value="inbox">站内消息</el-checkbox>
+</el-checkbox-group>
+```
+
+```ts
+import { ref } from 'vue';
+
+const channels = ref<string[]>(['sms']);
+
+function onChannelsChange(values: string[]): void {
+    console.log('当前所有已选渠道：', values);
+}
+```
+
+与单选不同，`values` 是当前已选值组成的**数组**，不是用户刚才点击的单个选项。不要把 `@change` 收到的数组直接赋给只接受一个字符串的接口字段。
+
 ### Switch：布尔状态与业务状态
 
 ```vue
@@ -515,6 +651,36 @@ const enabledFlag = enabled.value ? 'Y' : 'N';
 ```
 
 这样界面仍以布尔状态管理，接口边界负责转换成后端要求的格式。
+
+**禁用与加载状态的示例：**
+
+```vue
+<el-switch
+    v-model="enabled"
+    :disabled="saving"
+    :loading="saving"
+/>
+```
+
+这里 `saving` 是布尔响应式变量。`disabled` 表示用户不能操作；`loading` 表示正在处理。它们只影响前端交互，不会自动请求后端，也不会自动把操作结果持久化。
+
+**直接绑定业务码的另一种方式：** 当接口确实使用 `'Y'/'N'` 时，也可以设置开关两端对应的值：
+
+```vue
+<el-switch
+    v-model="noticeFlag"
+    active-value="Y"
+    inactive-value="N"
+/>
+```
+
+```ts
+import { ref } from 'vue';
+
+const noticeFlag = ref<'Y' | 'N'>('N');
+```
+
+这时绑定值是 `'Y'` 或 `'N'`，**不再是默认布尔值**。它与前面通过 `enabled.value ? 'Y' : 'N'` 提交时转换是两种不同设计，必须选一种并确保类型一致。
 
 ### 完整程序：账户通知偏好设置
 
@@ -622,13 +788,17 @@ function saveSettings(): void {
 >
 > `const accountType = ref('personal')` 与 `const channels = ref<string[]>(['sms'])` 为什么一个是字符串，一个是数组？
 >
-> 【答案】Radio Group 只保留当前选中的一个 `value`；Checkbox Group 可以同时选中多个选项，因此保存的是多个 `value` 组成的数组。不能把多选数组误当作一个普通字符串提交。
+> 【答案】
+>
+> Radio Group 只保留当前选中的一个 `value`；Checkbox Group 可以同时选中多个选项，因此保存的是多个 `value` 组成的数组。不能把多选数组误当作一个普通字符串提交。
 
 > [!EXERCISE] Switch 的文字与实际值
 >
 > 一个 Switch 使用 `active-text="启用"`，当前 `notificationsEnabled` 为 `true`。提交时是否会自动发送“启用”两个字？
 >
-> 【答案】不会。`active-text` 负责显示，默认 `v-model` 仍为布尔值 `true`。如果接口要求字符串，应在构造请求参数时明确转换。
+> 【答案】
+>
+> 不会。`active-text` 负责显示，默认 `v-model` 仍为布尔值 `true`。如果接口要求字符串，应在构造请求参数时明确转换。
 
 ## 日期选择：`el-date-picker` 实现交易日期查询
 
@@ -675,15 +845,39 @@ function saveSettings(): void {
 
 推荐先使用下面这组容易对照的约定：
 
-| 属性 | 示例 | 实际意义 |
-| --- | --- | --- |
-| `type="date"` | 选择 2026-11-03 | 选择单个日期 |
-| `type="daterange"` | 起止日期 | 选择区间 |
-| `format="YYYY/MM/DD"` | `2026/11/03` | 输入框展示 |
-| `value-format="YYYY-MM-DD"` | `2026-11-03` | 绑定到变量的值 |
-| `clearable` | 清除按钮 | 允许清空已选择的日期 |
-| `:disabled-date="fn"` | 不允许未来日期 | 决定面板中的哪些日期不可选 |
-| `@change="fn"` | 选定值变化 | 在用户完成日期选择或清空后处理变化 |
+| 属性                        | 示例            | 实际意义                           |
+| --------------------------- | --------------- | ---------------------------------- |
+| `type="date"`               | 选择 2026-11-03 | 选择单个日期                       |
+| `type="daterange"`          | 起止日期        | 选择区间                           |
+| `format="YYYY/MM/DD"`       | `2026/11/03`    | 输入框展示                         |
+| `value-format="YYYY-MM-DD"` | `2026-11-03`    | 绑定到变量的值                     |
+| `clearable`                 | 清除按钮        | 允许清空已选择的日期               |
+| `:disabled-date="fn"`       | 不允许未来日期  | 决定面板中的哪些日期不可选         |
+| `@change="fn"`              | 选定值变化      | 在用户完成日期选择或清空后处理变化 |
+
+**监听单日期选择变化的短代码：**
+
+```vue
+<el-date-picker
+    v-model="businessDate"
+    type="date"
+    value-format="YYYY-MM-DD"
+    clearable
+    @change="onDateChange"
+/>
+```
+
+```ts
+import { ref } from 'vue';
+
+const businessDate = ref('');
+
+function onDateChange(value: string | null): void {
+    console.log('日期变化后的值：', value);
+}
+```
+
+使用 `value-format` 后，用户选中时模型值是格式化字符串；清空时应处理空值。`clearable` 允许用户清除选择；`@change` 适合在确认选择或清空后进行依赖字段更新，不等于自动向服务器发请求。
 
 日期范围是**日期**还是**精确到秒的时间**，要看业务接口。`YYYY-MM-DD` 不包含时分秒，如果后端需要按时间戳查询，必须明确起止边界、时区和是否包含结束日，不能仅把日期字符串随便拼成时间戳。
 
@@ -804,7 +998,9 @@ function reset(): void {
 >
 > 如果输入框显示 `2026/11/03`，接口却要求 `2026-11-03`，应该分别设置什么？
 >
-> 【答案】设置 `format="YYYY/MM/DD"` 控制展示，设置 `value-format="YYYY-MM-DD"` 控制 `v-model` 返回的字符串格式。不要把 `format` 当作接口参数格式设置。
+> 【答案】
+>
+> 设置 `format="YYYY/MM/DD"` 控制展示，设置 `value-format="YYYY-MM-DD"` 控制 `v-model` 返回的字符串格式。不要把 `format` 当作接口参数格式设置。
 
 ## 标签页：`el-tabs` 与 `el-tab-pane`
 
@@ -830,19 +1026,61 @@ function reset(): void {
 
 ### 常用属性、事件与状态
 
-| 写法 | 含义 | 企业使用场景 |
-| --- | --- | --- |
-| `v-model="activeTab"` | 当前激活标签的 `name` | 控制显示哪个模块 |
-| `<el-tab-pane name="...">` | 标签的内部标识 | 控制业务类型 |
-| `label="..."` | 标签标题 | 展示中文名称 |
-| `type="card"` | 卡片式外观 | 后台页面模块切换 |
-| `tab-position="left"` | 标签导航放在左侧 | 内容较多的设置页面 |
-| `:disabled="true"` | 禁止切换到指定标签 | 尚未开放的业务 |
-| `@tab-change="handler"` | 当前激活标签发生改变时触发 | 触发必要的查询、记录状态 |
-| `@tab-click="handler"` | 点击标签时触发 | 用户点击行为处理 |
-| `<el-tab-pane lazy>` | 首次激活时才渲染面板内容 | 减少较复杂面板的初始化开销 |
+| 写法                       | 含义                       | 企业使用场景               |
+| -------------------------- | -------------------------- | -------------------------- |
+| `v-model="activeTab"`      | 当前激活标签的 `name`      | 控制显示哪个模块           |
+| `<el-tab-pane name="...">` | 标签的内部标识             | 控制业务类型               |
+| `label="..."`              | 标签标题                   | 展示中文名称               |
+| `type="card"`              | 卡片式外观                 | 后台页面模块切换           |
+| `tab-position="left"`      | 标签导航放在左侧           | 内容较多的设置页面         |
+| `:disabled="true"`         | 禁止切换到指定标签         | 尚未开放的业务             |
+| `@tab-change="handler"`    | 当前激活标签发生改变时触发 | 触发必要的查询、记录状态   |
+| `@tab-click="handler"`     | 点击标签时触发             | 用户点击行为处理           |
+| `<el-tab-pane lazy>`       | 首次激活时才渲染面板内容   | 减少较复杂面板的初始化开销 |
 
 `tab-change` 和 `tab-click` 不能完全等同：前者关注激活值改变，后者关注点击行为。业务需要“真正切换后才查询”时，应优先考虑 `tab-change` 或侦听 `activeTab`。
+
+**点击事件与值变化事件的短代码：**
+
+```vue
+<el-tabs
+    v-model="activeTab"
+    type="card"
+    @tab-change="onTabChange"
+    @tab-click="onTabClick"
+>
+    <el-tab-pane name="all" label="全部交易" />
+    <el-tab-pane name="pending" label="待处理" />
+    <el-tab-pane name="disabled" label="暂未开放" disabled />
+</el-tabs>
+```
+
+```ts
+import { ref } from 'vue';
+
+const activeTab = ref('all');
+
+function onTabChange(name: string | number): void {
+    console.log('切换后的激活值：', name);
+}
+
+function onTabClick(): void {
+    console.log('用户点击了某个可点击标签');
+}
+```
+
+`type="card"` 改变外观，`disabled` 禁止激活特定标签；`@tab-change` 关注当前激活值变化，`@tab-click` 关注标签被点击的行为。真实项目需要知道具体点击哪个标签时，可查看回调传入的标签上下文对象。
+
+**调整标签方位的写法：**
+
+```vue
+<el-tabs v-model="activeTab" tab-position="left">
+    <el-tab-pane label="账户信息" name="account" />
+    <el-tab-pane label="交易设置" name="settings" lazy />
+</el-tabs>
+```
+
+`tab-position="left"` 让标签位于左侧；`lazy` 让对应面板首次激活后才创建内容。它们只控制布局和面板渲染时机，不改变 `v-model` 绑定值的含义。
 
 `lazy` 只解决首次内容延迟渲染，不等于缓存组件实例，也不能当作 `<KeepAlive>` 的替代品。需要保留路由页面状态时，仍应分析 Vue 组件实例及缓存策略。
 
@@ -918,7 +1156,14 @@ function handleTabChange(name: string | number): void {
 </template>
 ```
 
-点击“待处理”后，`activeTab` 更新为 `'pending'`，`visibleRows` 重新计算，只保留预约转账。`el-table` 本身不需要知道用户点了哪个标签，它只负责显示计算出来的数组。
+**运行验证与预期结果：**
+
+1. 初次加载显示“全部交易”，`activeTab` 为 `'all'`，表格显示三条记录。
+2. 点击“待处理”，`activeTab` 变为 `'pending'`，`visibleRows` 只保留“转账预约”一条；`lastChange` 显示这次切换的标识。
+3. 点击“已完成”，`activeTab` 变为 `'done'`，表格显示“账户转入”和“信用卡还款”两条。
+4. 再点击“全部交易”，三条记录恢复。整个过程中没有向后端发送请求，都是 `computed()` 根据当前标签过滤数组。
+
+**数据流解释：** 点击标签改变 `activeTab`，`visibleRows` 重新计算；`el-table` 本身不需要知道用户点了哪个标签，它只负责显示计算出来的数组。
 
 这份示例故意把结果表格放在 Tabs 之外，说明标签页的激活值也可以控制其他区域的显示。实际项目如果每个标签内部包含完全不同的业务组件，也可以把对应组件放进各自的 `el-tab-pane` 中。
 
@@ -926,7 +1171,9 @@ function handleTabChange(name: string | number): void {
 >
 > `<el-tab-pane label="已完成" name="done" />` 激活后，`activeTab` 保存什么？
 >
-> 【答案】保存 `'done'`，因为 `name` 才是模型标识。`label` 只是用户看到的标签标题。
+> 【答案】
+>
+> 保存 `'done'`，因为 `name` 才是模型标识。`label` 只是用户看到的标签标题。
 
 ## 加载遮罩：`v-loading` 与异步状态
 
@@ -1051,17 +1298,15 @@ async function load(fail: boolean): Promise<void> {
 
 这里的 `setTimeout` 用来模拟异步等待，不会产生 HTTP 请求；要观察真实网络请求，需要把 `simulateQuery()` 换成第四天学习的 Axios API 函数，并到浏览器 Network 查看结果。
 
-### 扩展：`ElLoading.service()`
-
-除了指令，还可以在脚本中调用 `ElLoading.service()` 返回一个加载实例，通过 `close()` 关闭。适合某些不能方便地在模板中绑定 `v-loading` 的场景。
-
-一般页面首选模板指令：状态和区域关系更直接。若使用全屏 Loading Service，要记住全屏服务属于单例语义，多个独立操作共同持有时必须设计好关闭时机，不能因为其中一个请求结束就无条件把其他请求的加载提示也关掉。
+**补充阅读：** 如果不方便在模板中直接绑定加载状态，可以在后面的“Loading Service 处理命令式加载”拓展中学习另一种方式。主线先掌握 `v-loading` 与 `finally` 的配合。
 
 > [!EXERCISE] 为什么加了 v-loading 也会一直转圈
 >
 > 页面出现加载遮罩后一直不消失。是 Element Plus 自动加载失败了吗？应该优先检查什么？
 >
-> 【答案】优先检查绑定的 `loading` 是否在所有完成路径中恢复为 `false`。特别是 `await` 抛出异常后，是否有 `finally` 执行公共收尾逻辑。`v-loading` 只负责根据变量显示，不负责管理请求生命周期。
+> 【答案】
+>
+> 优先检查绑定的 `loading` 是否在所有完成路径中恢复为 `false`。特别是 `await` 抛出异常后，是否有 `finally` 执行公共收尾逻辑。`v-loading` 只负责根据变量显示，不负责管理请求生命周期。
 
 ## 表格进阶：多选与排序
 
@@ -1121,6 +1366,90 @@ Element Plus 的表格列支持 `sortable`：
 - `order`：`'ascending'`（升序）、`'descending'`（降序）或 `null`（恢复未排序）。
 
 这里的排序方向是状态，不是中文展示文字。提交后端时可根据协议映射成 `ASC`、`DESC` 或其他要求。
+
+**排序事件处理的最小代码：**
+
+```vue
+<el-table :data="rows" @sort-change="onSortChange">
+    <el-table-column prop="balance" label="余额" sortable="custom" />
+</el-table>
+```
+
+```ts
+function onSortChange(event: {
+    prop?: string;
+    order?: 'ascending' | 'descending' | null;
+}): void {
+    // 真实项目可把这两个值转换成后端分页查询参数。
+    console.log(event.prop, event.order);
+}
+```
+
+**`row-key`、`reserve-selection`、`:selectable`：**
+
+```vue
+<el-table :data="rows" row-key="id" @selection-change="onSelectionChange">
+    <el-table-column
+        type="selection"
+        :reserve-selection="true"
+        :selectable="canSelect"
+    />
+</el-table>
+```
+
+`row-key="id"` 指定每行的稳定标识；`reserve-selection` 表示在数据更新后按稳定 ID 尝试保留选择；`:selectable="canSelect"` 在每一行上调用函数，返回 `false` 时禁用对应勾选框。后面完整程序将用 `frozen` 字段决定哪些账户可以选中。
+
+处理函数可以这样定义，先理解回调参数再看完整程序：
+
+```ts
+import { ref } from 'vue';
+
+interface AccountRow {
+    id: number;
+    frozen: boolean;
+}
+
+const selectedRows = ref<AccountRow[]>([]);
+
+function canSelect(row: AccountRow): boolean {
+    return !row.frozen; // 已冻结账户不可选。
+}
+
+function onSelectionChange(selection: AccountRow[]): void {
+    selectedRows.value = selection; // 保存整个已选集合。
+}
+```
+
+`canSelect` 逐行判断是否可选，`onSelectionChange` 接收当前表格维护的整组选中记录；两者的参数和返回值不同，不能互换。完整程序会将这个逻辑应用到真实的 `Account` 类型。
+
+**`ref` 与表格公开方法：**
+
+```ts
+import { ref } from 'vue';
+import type { TableInstance } from 'element-plus';
+
+const tableRef = ref<TableInstance>();
+
+function clearSelectedRows(): void {
+    // 表格未挂载时实例不存在，因此使用可选链。
+    tableRef.value?.clearSelection();
+}
+```
+
+```vue
+<el-table ref="tableRef" :data="rows" row-key="id" />
+```
+
+`ref="tableRef"` 将表格组件实例交给脚本里的模板引用；`TableInstance` 用于 TypeScript 类型提示；`clearSelection()` 是表格公开的方法，用于清除当前选择。它们与 Vue 的普通数据 `ref<Account[]>()` 不同：前者指向组件实例，后者保存业务数组。
+
+### 多选与分页共同使用时的注意事项
+
+本节完整程序不包含分页，但实际业务中经常会结合分页查询。必须先确认：
+
+- **仅允许当前页批量操作：** 切换页码时清空选择。
+- **允许跨页选择：** 维护独立的已选 ID 集合，并按照业务规则处理选择和取消选择。
+
+`reserve-selection` 只能在数据更新时按 `row-key` 帮助保留选择，不等于自动实现完整跨页选择。`selection-change` 反映表格当前维护的选择，不能直接推断用户已经选中了服务端全部查询结果。
 
 ### 完整程序：批量冻结账户与余额排序
 
@@ -1264,20 +1593,15 @@ async function freezeSelected(): Promise<void> {
 
 这里用到了 `TableInstance` 类型以及 `tableRef.value?.clearSelection()`。`TableInstance` 表示 Element Plus 表格组件实例的类型；`ref="tableRef"` 让 Vue 在表格挂载后把实例赋给变量；`clearSelection()` 是表格暴露的清除勾选方法。`?.` 是可选链，用于在实例还没有创建时避免访问空值抛错。
 
-### 多选与分页共同使用时的注意事项
-
-本例没有分页。如果后端是分页接口，每次只返回当前页，表格选择状态需要按业务规则处理：
-
-- 仅允许当前页批量操作：切换页码时清空选择。
-- 允许跨页选择：需要保存已选 ID 的独立集合，并设置稳定的 `row-key`，结合表格的 `reserve-selection` 行为管理选择；不能仅凭当前页 `selection-change` 结果代表所有页。
-
-`reserve-selection` 表示尝试依据稳定的 `row-key` 在数据更新时保留已选行，它不是跨页批量业务的完整实现。`selection-change` 的数组是**表格当前维护的选择**，不一定天然等同于“服务端整个查询结果范围内的选中集合”。跨页批量操作需要专门设计和测试。
+**进一步验收：** 这个示例中表格一次取得全部四条记录，排序只改变当前显示顺序。它没有服务端分页，所以不能凭此证明跨页选择规则已经正确；跨页批量操作需要按前面的独立说明实现额外状态管理和测试。
 
 > [!EXERCISE] 为什么当前页排序不等于全量排序
 >
 > 服务器有 1000 条记录，每次只返回 10 条。如果前端只对这 10 条按余额排序，能否说完成了“全部记录按余额从高到低排序”？
 >
-> 【答案】不能。前端只能改变当前已加载的 10 条记录顺序。需要全量排序时，应让后端先按排序条件处理全部符合条件的记录，再返回对应页；前端通过 `sort-change` 读取排序字段与方向，并请求新数据。
+> 【答案】
+>
+> 不能。前端只能改变当前已加载的 10 条记录顺序。需要全量排序时，应让后端先按排序条件处理全部符合条件的记录，再返回对应页；前端通过 `sort-change` 读取排序字段与方向，并请求新数据。
 
 ## 拓展：表单自定义校验与异步校验
 
@@ -1338,6 +1662,7 @@ const formRef = ref<FormInstance>();
 const saving = ref(false);
 const currentAlias = ref('储蓄账户');
 
+// 模拟其他账户已经占用的别名，当前输入若与其相同则拒绝。
 const existingAliases = ['储蓄账户', '工资账户'];
 
 async function validateAlias(_rule: unknown, value: string): Promise<void> {
@@ -1405,7 +1730,9 @@ async function submit(): Promise<void> {
 >
 > 浏览器先查询到别名可用，随后用户点击保存。可以因此完全取消服务端重复检查吗？
 >
-> 【答案】不能。前端异步校验只是一种用户体验机制，检查与最终保存不是同一个原子操作。服务端仍要重新校验，并通过数据库约束或业务事务保证并发情况下的数据正确性。
+> 【答案】
+>
+> 不能。前端异步校验只是一种用户体验机制，检查与最终保存不是同一个原子操作。服务端仍要重新校验，并通过数据库约束或业务事务保证并发情况下的数据正确性。
 
 ## 拓展：`before-close` 与关闭前确认
 
@@ -1505,7 +1832,22 @@ async function cancelFromFooter(): Promise<void> {
 
 大多数页面可以直接在模板中写 `v-loading="loading"`。如果某个操作需要在脚本中临时开启全屏加载遮罩，可以使用 `ElLoading.service()`，它会返回一个可以关闭的实例。
 
-服务方式需要自己保证关闭，不会因为 Promise 成功或失败自动消失。
+服务方式需要自己保证关闭，不会因为 Promise 成功或失败自动消失。先看它最短的调用结构：
+
+```ts
+import { ElLoading } from 'element-plus';
+
+const loading = ElLoading.service({
+    fullscreen: true, // 显示全屏遮罩。
+    lock: true,       // 遮罩期间锁定页面滚动。
+    text: '正在处理账户'
+});
+
+// 业务真正完成后需要调用实例方法关闭。
+loading.close();
+```
+
+`ElLoading.service(options)` 接收配置对象并返回加载实例；实例的 `close()` 用于关闭。上面的两行创建与关闭只演示 API 结构；在完整业务代码中，必须把 `close()` 放进 `finally`，否则请求失败时遮罩可能无法消失。
 
 ### 完整程序：模拟批处理全屏加载
 
@@ -1549,7 +1891,14 @@ async function batchProcess(): Promise<void> {
 </template>
 ```
 
-`fullscreen: true` 表示全屏覆盖；`lock: true` 表示加载期间锁定页面滚动；`text` 是遮罩说明。`loading.close()` 负责结束遮罩，应该放在 `finally` 中。
+**运行验证与预期结果：**
+
+1. 点击“开始模拟批处理”，页面出现全屏加载遮罩，显示“正在模拟批量处理账户，请勿重复提交”。
+2. 遮罩显示期间，`working` 为 `true`，按钮被禁用，避免重复发起本次模拟操作。
+3. 等待约 1200 毫秒后出现成功消息，遮罩关闭，按钮恢复可点击状态。
+4. 如果把模拟异步操作临时改成 `await Promise.reject(new Error('模拟批处理失败'))`，会进入 `catch` 显示失败消息；即使失败，`finally` 也会关闭遮罩并恢复 `working`。完成实验后恢复原代码。
+
+**参数和收尾说明：** `fullscreen: true` 表示全屏覆盖；`lock: true` 表示加载期间锁定页面滚动；`text` 是遮罩说明。`loading.close()` 负责结束遮罩，应该放在 `finally` 中。
 
 **注意：** Element Plus 的全屏 Loading Service 是单例，不要让多个并发业务各自认为自己拥有一份独立全屏遮罩。真实项目中应规划全局加载计数或按区域展示，避免一个请求结束时误关闭另一个请求仍在使用的遮罩。
 
@@ -1559,20 +1908,20 @@ async function batchProcess(): Promise<void> {
 
 以后阅读企业项目的模板时，遇到一个标签可以先判断它属于哪一类：
 
-| 看到的代码 | 先确认什么 | 继续追踪 |
-| --- | --- | --- |
-| `<el-dialog v-model="visible">` | `visible` 由谁控制 | 打开函数、草稿初始化、关闭规则 |
-| `<template #footer>` | 父组件填入了什么底部内容 | 保存、取消按钮事件 |
-| `ElMessage.success(...)` | 这是非阻塞结果提示 | 是哪个操作真正完成后触发 |
-| `ElMessageBox.confirm(...)` | 用户确认是否已完成 | 取消分支是否提前返回 |
-| `<el-radio-group>` | 单选的绑定值是什么类型 | 选项 `value` 和接口枚举 |
-| `<el-checkbox-group>` | 模型是否为数组 | 数组元素值与业务含义 |
-| `<el-switch>` | 模型是布尔还是定制值 | 是否需要提交前转换 |
-| `<el-date-picker>` | `type` 与 `value-format` | 接口要求日期还是时间戳 |
-| `<el-tabs>` | 当前标签的 `name` | 切换时是否发起查询 |
-| `v-loading="loading"` | 控制加载的变量 | `finally` 是否恢复状态 |
-| `<el-table-column type="selection">` | 选择范围是什么 | 批量操作使用的 ID 列表 |
-| `<el-table-column sortable="custom">` | 是否真正启用了后端排序 | `sort-change` 和 API 参数 |
+| 看到的代码                            | 先确认什么               | 继续追踪                       |
+| ------------------------------------- | ------------------------ | ------------------------------ |
+| `<el-dialog v-model="visible">`       | `visible` 由谁控制       | 打开函数、草稿初始化、关闭规则 |
+| `<template #footer>`                  | 父组件填入了什么底部内容 | 保存、取消按钮事件             |
+| `ElMessage.success(...)`              | 这是非阻塞结果提示       | 是哪个操作真正完成后触发       |
+| `ElMessageBox.confirm(...)`           | 用户确认是否已完成       | 取消分支是否提前返回           |
+| `<el-radio-group>`                    | 单选的绑定值是什么类型   | 选项 `value` 和接口枚举        |
+| `<el-checkbox-group>`                 | 模型是否为数组           | 数组元素值与业务含义           |
+| `<el-switch>`                         | 模型是布尔还是定制值     | 是否需要提交前转换             |
+| `<el-date-picker>`                    | `type` 与 `value-format` | 接口要求日期还是时间戳         |
+| `<el-tabs>`                           | 当前标签的 `name`        | 切换时是否发起查询             |
+| `v-loading="loading"`                 | 控制加载的变量           | `finally` 是否恢复状态         |
+| `<el-table-column type="selection">`  | 选择范围是什么           | 批量操作使用的 ID 列表         |
+| `<el-table-column sortable="custom">` | 是否真正启用了后端排序   | `sort-change` 和 API 参数      |
 
 ### 容易混淆的几个概念
 
@@ -1592,25 +1941,33 @@ async function batchProcess(): Promise<void> {
 >
 > 账户编辑弹窗关闭后重新打开，仍然显示上一条记录的姓名。应从哪些位置检查？
 >
-> 【答案】先检查每次打开弹窗时是否用当前记录重新初始化草稿；再检查是否直接把原行对象绑定给表单；最后检查 `destroy-on-close` 与表单内部状态的处理方式。是否销毁组件不能替代正确的业务草稿初始化。
+> 【答案】
+>
+> 先检查每次打开弹窗时是否用当前记录重新初始化草稿；再检查是否直接把原行对象绑定给表单；最后检查 `destroy-on-close` 与表单内部状态的处理方式。是否销毁组件不能替代正确的业务草稿初始化。
 
 > [!EXERCISE] 日期输入框显示对了，但接口报格式错误
 >
 > 输入框显示 `2026/11/03`，接口要求 `2026-11-03`，为什么只设置 `format="YYYY/MM/DD"` 不够？
 >
-> 【答案】`format` 只控制显示。接口需要的数据类型和格式取决于 `value-format` 或接口层转换；应该明确设置 `value-format="YYYY-MM-DD"`，并检查最终请求的真实参数。
+> 【答案】
+>
+> `format` 只控制显示。接口需要的数据类型和格式取决于 `value-format` 或接口层转换；应该明确设置 `value-format="YYYY-MM-DD"`，并检查最终请求的真实参数。
 
 > [!EXERCISE] 全部交易与当前页交易的批量操作
 >
 > 用户在服务端分页表格上只勾选当前页两条记录，程序能否直接把当前 `selection-change` 数组认定为“用户选中了查询结果的全部记录”？
 >
-> 【答案】不能。`selection-change` 代表表格当前维护的选择。是否允许跨页选择、如何保存已选 ID、取消选择时如何同步，都需要按业务要求明确设计。
+> 【答案】
+>
+> 不能。`selection-change` 代表表格当前维护的选择。是否允许跨页选择、如何保存已选 ID、取消选择时如何同步，都需要按业务要求明确设计。
 
 > [!EXERCISE] 保存失败后怎么恢复按钮和弹窗
 >
 > 提交弹窗表单时打开了 loading，接口返回失败。用户仍要修改刚才的内容重新保存，页面应该如何处理？
 >
-> 【答案】在 `catch` 中显示业务错误并保留当前草稿和弹窗，在 `finally` 中恢复 loading。不能在请求尚未成功时就关闭弹窗、丢弃草稿，或者把按钮永久禁用。
+> 【答案】
+>
+> 在 `catch` 中显示业务错误并保留当前草稿和弹窗，在 `finally` 中恢复 loading。不能在请求尚未成功时就关闭弹窗、丢弃草稿，或者把按钮永久禁用。
 
 ### 官方文档索引
 
