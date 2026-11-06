@@ -1,7 +1,13 @@
 ---
+id: vue-course-supplement-day-1
+title: "Vue 企业开发 · 补充第一天：组件进阶与模板实用语法"
+folder: miscellaneous
+order: 1106
 date: 2026-11-03
+updated: 2026-11-06
 tags: [Vue, TypeScript, 动态组件, KeepAlive, 模板引用, 自定义指令]
 description: "通过银行账户页面学习动态组件、组件缓存、defineOptions、defineExpose、nextTick、事件修饰符、动态样式和自定义指令。"
+pinned: false
 draft: false
 ---
 
@@ -18,7 +24,7 @@ draft: false
 | `defineOptions()` 与属性透传 | 15 分钟 | 理解组件选项、组件名、`$attrs` |
 | `defineExpose()` 与模板引用 | 20 分钟 | 父组件按需调用子组件暴露的方法 |
 | `nextTick()` | 15 分钟 | 等待 DOM 更新后聚焦或读取元素 |
-| 事件修饰符与动态样式 | 15 分钟 | 处理点击冒泡、表单提交与状态样式 |
+| 事件与表单修饰符、动态样式 | 15 分钟 | 处理冒泡、默认行为、输入转换与状态样式 |
 | 自定义指令 | 15 分钟 | 抽出可复用的 DOM 聚焦行为 |
 | **合计** | **120 分钟** | |
 
@@ -44,6 +50,8 @@ npm run dev
 ```
 
 每节的**完整程序**都是独立的：它会注明需要创建的文件。一个示例结束后，进入下一节时，按照下一节的文件说明替换 `App.vue`，不要把多个 `<script setup>`、多个根模板合并到同一个文件。
+
+阅读顺序统一为：**概念与用途 → 首次出现的属性、方法及简短代码 → 完整可运行程序 → 同一节中的运行步骤和结果解释**。运行验证不再拆成脱离程序的独立小节；同一段示例中用到的新语法，会先解释再出现。
 
 本日采用 Vue 3.3 及以上才支持的 `defineOptions()`；如果使用 Vue 3.5 及以上，还可以用 `useTemplateRef()` 简化模板引用。为了兼容更多 Vue 3 项目，主线模板引用主要使用 `ref<元素或组件类型 | null>(null)`。
 
@@ -176,7 +184,7 @@ const activeComponent = computed(() => {
 </template>
 ```
 
-### 观察执行过程
+**运行验证与原因：**
 
 先在“账户查询”中输入 `6222`，再切换到“转账草稿”，最后切回“账户查询”。你会发现原来的 `6222` 消失了。
 
@@ -193,13 +201,34 @@ const activeComponent = computed(() => {
 | `<component :is="activeComponent" :account-id="id" />` | 向当前组件传 Props | 被切换的组件都应正确声明其需要的 Props |
 | `<component :is="activeComponent" :key="someKey" />` | 为当前组件提供显式身份标识 | `key` 不会自动保存组件状态，它用于区分实例身份 |
 
+例如，当两个业务组件都声明了可选的 `accountId` Prop 时，可以在动态组件上直接传递：
+
+```vue
+<component
+    :is="activeComponent"
+    :account-id="selectedAccountId"
+/>
+```
+
+这里 `selectedAccountId` 是父组件已有的变量，`:account-id` 仍是第三天学过的 Props 动态绑定。若某个被切换组件没有声明这个 Prop，要根据它的具体实现判断未声明属性如何透传，不能假定每个组件都一定读取了它。
+
+需要刻意**重新创建**同一组件的不同业务实例时，还可以为它提供不同的 `key`：
+
+```vue
+<component :is="activeComponent" :key="selectedAccountId" />
+```
+
+`key` 用于区分组件实例身份：同一组件类型下，`key` 变化会让 Vue 重新创建对应实例。它不是缓存开关，也不是自动传给子组件的业务参数。若外层存在 `<KeepAlive>`，不同 `key` 还会影响缓存实例身份，需要结合缓存配置分析。
+
 普通组件的 Props、Emit 仍然有效，动态组件只是决定使用哪一个组件定义。
 
 > [!EXERCISE] 动态组件为什么丢失输入
 >
 > 输入账户编号之后切到转账草稿，再切回账户查询，输入框为什么恢复空值？
 >
-> 【答案】默认切换动态组件会卸载原组件，再创建新实例。`accountNo` 定义在子组件内部，新实例会重新执行 `ref('')`，所以恢复空值。要保留旧实例，可以使用下一节的 `<KeepAlive>`。
+> 【答案】
+>
+> 默认切换动态组件会卸载原组件，再创建新实例。`accountNo` 定义在子组件内部，新实例会重新执行 `ref('')`，所以恢复空值。要保留旧实例，可以使用下一节的 `<KeepAlive>`。
 
 ## KeepAlive：切换组件时保留状态
 
@@ -367,7 +396,7 @@ const activeComponent = computed(() => {
 </template>
 ```
 
-### 按实际操作理解缓存
+**运行验证与预期结果：**
 
 1. 在“账户查询”输入“工资账户”，等待激活时间增长到 3 秒。
 2. 切换到“转账草稿”，填写“房租”。
@@ -387,7 +416,31 @@ const activeComponent = computed(() => {
 | `exclude` | 不缓存名称匹配的组件 | `exclude="SensitiveForm"` |
 | `max` | 最多保留多少个缓存实例 | `:max="5"` |
 
-例如：
+**只缓存指定组件：**
+
+```vue
+<KeepAlive include="CachedAccountQuery">
+    <component :is="activeComponent" />
+</KeepAlive>
+```
+
+**排除指定组件：**
+
+```vue
+<KeepAlive exclude="SensitiveForm">
+    <component :is="activeComponent" />
+</KeepAlive>
+```
+
+**限制最多保留五个缓存实例：**
+
+```vue
+<KeepAlive :max="5">
+    <component :is="activeComponent" />
+</KeepAlive>
+```
+
+前两段中的 `include`、`exclude` 使用的是组件名称；`max` 是数字，因此写成动态绑定 `:max="5"`。当缓存数量达到限制并需要保留新实例时，Vue 会按最近最少使用的策略淘汰旧实例。也可以组合多个属性：
 
 ```vue
 <KeepAlive include="CachedAccountQuery" :max="5">
@@ -395,7 +448,7 @@ const activeComponent = computed(() => {
 </KeepAlive>
 ```
 
-在这种写法中，只有名称匹配 `CachedAccountQuery` 的组件才会进入缓存，转账草稿切走后不会保留。`max` 达到限制时，Vue 会按最近最少使用的策略淘汰旧实例。
+此时只有名称匹配 `CachedAccountQuery` 的组件才会进入缓存，其他组件切走后不会保留。
 
 **`include` / `exclude` 匹配的是组件的 `name` 选项，不是点击按钮所用的业务标识。** Vue 3.2.34 及以上的 `<script setup>` 单文件组件可以从文件名推断组件名；如果项目需要显式指定名称，可以使用下一节的 `defineOptions()`。
 
@@ -405,7 +458,9 @@ const activeComponent = computed(() => {
 >
 > 给实时账户组件加了 `<KeepAlive>`，离开页面后定时查询仍然执行。为什么？应该在什么位置停止？
 >
-> 【答案】`KeepAlive` 让组件进入停用状态，但不会自动停止自己创建的 `setInterval()`。应在 `onDeactivated()` 中暂停，在 `onActivated()` 中恢复，并在 `onUnmounted()` 中兜底清理。
+> 【答案】
+>
+> `KeepAlive` 让组件进入停用状态，但不会自动停止自己创建的 `setInterval()`。应在 `onDeactivated()` 中暂停，在 `onActivated()` 中恢复，并在 `onUnmounted()` 中兜底清理。
 
 ## defineOptions：声明组件自身的选项
 
@@ -532,13 +587,15 @@ const keyword = ref('');
 </template>
 ```
 
-### 把执行链串起来
+**代码执行过程：**
 
 1. 父组件的 `v-model="keyword"` 按第三天学习的约定，向子组件传 `modelValue` 并监听 `update:modelValue`。
 2. 子组件把 `props.modelValue` 放进原生 `<input>` 的 `value`。
 3. 父组件传来的 `placeholder`、`maxlength`、`aria-label` 没有定义为子组件 Props，因此由 `$attrs` 接收。
 4. `v-bind="$attrs"` 把它们放到内部输入框，而不是外层 `<div>`。
 5. 用户输入后，原生 `input` 事件被 `handleInput()` 接收，子组件发出 `update:modelValue`，父组件更新 `keyword`。
+
+**运行验证：** 输入框应显示“请输入账户名称”的提示文字，输入内容最长为 12 个字符；输入内容时，下方“查询条件”同步更新。打开浏览器 Elements 面板，可以确认 `placeholder` 和 `maxlength` 最终落在内部 `<input>`，而不是外层 `<div>`。
 
 ### `name` 和 `inheritAttrs` 不要混淆
 
@@ -556,7 +613,9 @@ const keyword = ref('');
 >
 > 父组件把 `placeholder` 传给 `<BankSearchInput>`，但子组件模板的根元素是 `<div>`，真正的输入框是内部 `<input>`。为什么属性可能没有正确生效？
 >
-> 【答案】Vue 默认会把未声明的属性透传到单一根元素，即外层 `<div>`。`placeholder` 对这个 `<div>` 没有输入提示作用。可以通过 `defineOptions({ inheritAttrs: false })` 关闭自动透传，再在内部 `<input>` 上使用 `v-bind="$attrs"`。
+> 【答案】
+>
+> Vue 默认会把未声明的属性透传到单一根元素，即外层 `<div>`。`placeholder` 对这个 `<div>` 没有输入提示作用。可以通过 `defineOptions({ inheritAttrs: false })` 关闭自动透传，再在内部 `<input>` 上使用 `v-bind="$attrs"`。
 
 ## defineExpose：允许父组件调用子组件公开的方法
 
@@ -712,7 +771,7 @@ function focusChild(): void {
 </template>
 ```
 
-### 运行后看什么
+**运行验证与调用链：**
 
 输入“工资账户”，点击外层的“清空子表单”，输入变成空字符串。点击“定位到姓名输入框”，光标会移动到子组件中的输入框。
 
@@ -732,7 +791,7 @@ function focusChild(): void {
 
 父组件没有直接接触子组件的私有状态。以后子组件内部将 `name` 改名，或者重构输入区域，只要继续公开 `reset()`，父组件就不必跟着修改内部细节。
 
-### Vue 3.5 及以上：使用 `useTemplateRef()` 取得 DOM
+### `useTemplateRef()`：简化模板引用的写法（拓展）
 
 前面的模板引用采用 `ref<HTMLInputElement | null>(null)`，这种写法在 Vue 3 较早版本中也能使用。Vue 3.5 起还提供 **`useTemplateRef()`**，让模板引用名称与变量之间的关系更直观。
 
@@ -772,6 +831,8 @@ onMounted(focusInput);
 
 这里 `onMounted()` 是已经学过的生命周期钩子；新知识点只有 `useTemplateRef()` 的引用方式。它不会改变父子组件通信规则，也不能绕过 `defineExpose()` 访问子组件没有公开的方法。
 
+**运行验证：** 首次打开页面时输入框自动聚焦。点击“重新定位到输入框”，浏览器焦点再次落在同一个输入框。若去掉 `onMounted(focusInput)`，首次打开时不会自动聚焦，但按钮在组件挂载后仍能调用 `focusInput()`。
+
 ### 与 Props、Emit 的适用边界
 
 | 需要完成的事情 | 优先使用 | 原因 |
@@ -787,7 +848,9 @@ onMounted(focusInput);
 >
 > `<script setup>` 子组件内部定义了 `reset()`，父组件已经写了 `ref="editorRef"`，为什么仍需要 `defineExpose({ reset })`？
 >
-> 【答案】`<script setup>` 组件默认不会公开其所有内部变量与函数。模板引用只能访问子组件明确暴露的公共实例接口；`defineExpose({ reset })` 用于建立这个接口。
+> 【答案】
+>
+> `<script setup>` 组件默认不会公开其所有内部变量与函数。模板引用只能访问子组件明确暴露的公共实例接口；`defineExpose({ reset })` 用于建立这个接口。
 
 ## nextTick：先更新响应式数据，再操作新生成的 DOM
 
@@ -876,6 +939,13 @@ function closeEdit(): void {
 </template>
 ```
 
+**运行验证与预期结果：**
+
+1. 初次页面没有姓名输入框。
+2. 点击“开始编辑并聚焦”，输入框出现，浏览器焦点落到输入框中，可以直接输入。
+3. 点击“关闭编辑”，`v-if` 移除输入框，模板引用变回 `null`。
+4. 再次点击“开始编辑并聚焦”，`nextTick()` 等待新的输入框挂载后再次聚焦。
+
 ### 为什么不直接使用 `setTimeout()`
 
 使用 `setTimeout(..., 0)` 把操作推迟到另一个任务，也不等于准确表达“等待 Vue 把 DOM 更新好”。它依赖事件循环调度，而且会让代码表达的意图变得模糊。
@@ -897,7 +967,88 @@ function closeEdit(): void {
 >
 > 页面执行 `editing.value = true` 后立即读取 `nameInput.value`，为什么会是 `null`？`await nextTick()` 能帮我们等待什么？
 >
-> 【答案】因为 Vue 把响应式状态对应的 DOM 更新安排在后续执行，输入框可能还没有被创建。`nextTick()` 等待本轮 Vue DOM 更新完成，不负责等待 HTTP 请求。
+> 【答案】
+>
+> 因为 Vue 把响应式状态对应的 DOM 更新安排在后续执行，输入框可能还没有被创建。`nextTick()` 等待本轮 Vue DOM 更新完成，不负责等待 HTTP 请求。
+
+## 表单修饰符：清理输入与转换数据
+
+在学习点击、提交和键盘事件修饰符之前，先了解紧接着的综合示例将使用到的 **`v-model` 表单修饰符**。`.trim` 和 `.number` 负责处理输入值的转换，不负责处理事件冒泡或浏览器默认提交。
+
+它们与后面要学的 `@click.stop`、`@submit.prevent` 等 **`v-on` 事件修饰符** 属于不同类别：前者关注输入值如何写入响应式状态，后者关注事件如何触发和传播。
+
+### `.trim`：去掉输入值首尾空白
+
+```vue
+<input v-model.trim="keyword" placeholder="请输入账户名称" />
+```
+
+假设 `keyword` 是一个字符串 ref，用户输入前后带空白的内容，Vue 将清理首尾空白后的结果同步到 `keyword`。它不会删除字符串中间的空格，也不能取代业务提交前的服务端参数校验。
+
+### `.number`：尝试转换为数字
+
+```vue
+<input v-model.number="amount" type="number" />
+```
+
+假设 `amount` 的类型为 `ref<number | string>(100)`。用户输入可解析的数字时，模型值是数值；清空输入框时，模型值可以是空字符串。转换失败时会保留原值，所以不能仅因使用了 `.number` 就断言任何时刻的输入值都是 `number`。
+
+对于原生 `type="number"` 的输入框，Vue 本身也会启用数字转换；这里显式写 `.number` 便于阅读。**实际提交金额前仍需验证是否为空、是否为合法数字、是否在允许范围内，并按接口约定处理金额精度。**
+
+### `.trim` 和 `.number` 与事件修饰符的区别
+
+```vue
+<!-- 修改双向绑定的数据值。 -->
+<input v-model.trim="keyword" />
+
+<!-- 按 Enter 执行查询，不会自动清理 keyword。 -->
+<input v-model="keyword" @keyup.enter="search" />
+```
+
+第一个例子修改输入值写入模型的规则，第二个例子修改什么键盘事件会执行函数。这两类修饰符服务于不同目的。
+
+下面的完整程序可以在一个页面里观察 `.trim` 和 `.number` 的实际结果。
+
+### 完整程序：姓名去空白与金额类型检查
+
+文件：`src/App.vue`
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue';
+
+// 允许空字符串：用户把数字输入框清空后，值不一定是 number。
+const amount = ref<number | string>(100);
+const name = ref('');
+
+function check(): void {
+    console.log('姓名：', name.value);
+    console.log('金额值：', amount.value);
+    console.log('金额值的运行时类型：', typeof amount.value);
+}
+</script>
+
+<template>
+    <h2>查询条件类型实验</h2>
+    <label>
+        姓名：
+        <input v-model.trim="name" placeholder="输入姓名" />
+    </label>
+    <label>
+        金额：
+        <input v-model.number="amount" type="number" />
+    </label>
+    <button @click="check">检查输入值</button>
+
+    <p>姓名：{{ name }}</p>
+    <p>金额：{{ amount }}</p>
+    <p>金额类型：{{ typeof amount }}</p>
+</template>
+```
+
+**运行验证：** 在姓名框输入前后带空白的文字，观察下方显示的姓名已经去除首尾空白；在金额框输入 `125` 并点击“检查输入值”，Console 显示金额类型为 `number`；清空金额输入框后再检查，金额值是空字符串，类型为 `string`。如果你输入的数据不满足业务金额要求，`.number` 不会代替业务校验。
+
+这说明表单修饰符改变的是**输入值写入响应式状态的处理方式**。后面介绍事件修饰符时，将把这两类语法结合成一个账户页面示例。
 
 ## 事件修饰符：少写事件细节，多表达操作意图
 
@@ -952,6 +1103,8 @@ Vue 提供 **事件修饰符（Event Modifiers）**。它们是写在事件名�
 
 注意 `.stop` 只控制这次 DOM 事件的传播，**不会自动阻止后端删除，也不会替你完成确认弹窗**。
 
+如果子组件的点击处理本身会发出 `emit('remove', id)`，`.stop` 也不会自动取消自定义组件事件。它处理的是当前 DOM 点击事件向祖先 DOM 元素传播的问题。
+
 ### `.prevent`：阻止浏览器默认行为
 
 原生表单提交默认会触发浏览器导航或重新加载页面的行为。单页应用往往希望由 JavaScript 接管提交过程：
@@ -982,12 +1135,50 @@ Vue 提供 **事件修饰符（Event Modifiers）**。它们是写在事件名�
 
 如果输入框位于 `<form>` 内，Enter 本身就可能触发原生表单提交。**不要不加分析地同时在表单上写 `@submit.prevent="search"`，又在同一个输入框上写 `@keyup.enter="search"`**，否则一次 Enter 操作有机会触发两条路径。先统一决定由哪一个事件负责提交。
 
-### `.self`、`.once` 的意义
+### `.self`：只在事件目标是当前元素时执行
 
-- `@click.self="close"`：只有事件目标本身就是当前元素时才执行，点击内部子元素不会触发这个处理函数。常用于遮罩层：点空白遮罩关闭弹窗，点弹窗内容不关闭。
-- `@click.once="confirm"`：此监听器最多响应一次，适合一次性的前端引导操作。
+遮罩层中有一个弹窗内容区，用户点击弹窗内部时不应关闭弹窗，点击遮罩空白处才关闭：
 
-`.once` 只约束**这个事件监听器**，并不等于业务接口具备幂等性，也不能代替后端的重复提交保护。
+```vue
+<div class="mask" @click.self="closeDialog">
+    <section class="dialog">
+        <p>账户操作确认</p>
+        <button @click="confirm">确认</button>
+    </section>
+</div>
+```
+
+这里监听器绑在外层 `.mask`。点击空白遮罩时，事件目标就是 `.mask`，执行 `closeDialog()`；点击里面的 `<section>` 或按钮时，事件目标是内部元素，**不执行** `closeDialog()`。不过，内部按钮自己的 `confirm()` 仍然可以执行。
+
+`.self` 和 `.stop` 不相同：`.self` 检查事件目标是不是当前元素；`.stop` 阻止事件继续向祖先元素冒泡。`.self` 本身**不会阻止冒泡**。
+
+### `.once`：让当前事件监听器最多触发一次
+
+例如用户首次阅读操作指引后，记录一次确认行为：
+
+```vue
+<button @click.once="acknowledge">
+    我已阅读操作指引
+</button>
+```
+
+第一次点击会执行 `acknowledge()`，之后再次点击不会触发这个监听器。它**不等于自动禁用按钮**，也不会禁止同一个函数通过其他代码入口被调用。
+
+`.once` 只约束当前前端事件监听器，**并不等于业务接口具备幂等性**，不能代替后端的重复提交保护。
+
+### 修饰符可以组合，但执行顺序有意义
+
+例如：
+
+```vue
+<form @submit.prevent="submitForm">
+    <button type="submit" @click.stop="recordClick">提交</button>
+</form>
+```
+
+按钮的 `.stop` 只阻止 **click** 事件的冒泡；提交按钮仍会触发表单的 **submit** 事件，由 `@submit.prevent` 接管。两个事件不同，不能认为阻止 click 冒泡就阻止了 form 提交。
+
+**事件修饰符小结：** `.stop` 管传播、`.prevent` 管默认行为、`.enter` 管按键过滤、`.self` 管目标元素、`.once` 管触发次数。
 
 ### 完整程序：账户卡片、查询输入和原生提交
 
@@ -1079,7 +1270,7 @@ function acknowledge(): void {
 </style>
 ```
 
-### 如何验证修饰符真的生效
+**运行验证与预期结果：**
 
 - 点击卡片空白处，日志出现“打开账户详情”。
 - 点击卡片内的“删除”，只出现删除日志，不会同时出现打开详情。
@@ -1090,57 +1281,13 @@ function acknowledge(): void {
 
 本例使用 `:key="index"` 只因为操作日志是简单的展示列表，并没有在行内维护独立表单状态。业务记录列表仍应优先使用稳定 ID 作为 `key`。
 
-### 表单修饰符 `.trim` 和 `.number`
-
-`v-model` 也有自己的修饰符，不要把它们和 `@click.stop` 混在一起理解：
-
-- `v-model.trim`：对原生文本输入值做去首尾空白的处理；
-- `v-model.number`：尝试把原生输入值转换为数字；不能解析为数字时，会保留原值，因此输入为空时不应无条件断言它一定是 `number`。对于原生 `type="number"` 输入框，Vue 也会自动应用数字转换行为；这里显式写 `.number` 是为了便于识别语法。
-
-为了观察 `.number` 的边界，使用下面这个可独立运行的程序。
-
-文件：`src/App.vue`
-
-```vue
-<script setup lang="ts">
-import { ref } from 'vue';
-
-// 允许空字符串：用户把数字输入框清空后，值不一定是 number。
-const amount = ref<number | string>(100);
-const name = ref('');
-
-function check(): void {
-    console.log('姓名：', name.value);
-    console.log('金额值：', amount.value);
-    console.log('金额值的运行时类型：', typeof amount.value);
-}
-</script>
-
-<template>
-    <h2>查询条件类型实验</h2>
-    <label>
-        姓名：
-        <input v-model.trim="name" placeholder="输入姓名" />
-    </label>
-    <label>
-        金额：
-        <input v-model.number="amount" type="number" />
-    </label>
-    <button @click="check">检查输入值</button>
-
-    <p>姓名：{{ name }}</p>
-    <p>金额：{{ amount }}</p>
-    <p>金额类型：{{ typeof amount }}</p>
-</template>
-```
-
-输入数字并检查时，金额可以是数值类型；把金额框全部清空后，再观察 Console 和模板，可以看到为什么业务提交前仍需要校验空值、金额范围和接口所需的数据格式。
-
 > [!EXERCISE] 为什么一个 Enter 操作可能调用两次查询
 >
 > `<form @submit.prevent="search">` 包住输入框，输入框又写了 `@keyup.enter="search"`。为什么有重复执行风险？
 >
-> 【答案】Enter 可能触发表单提交，而输入框的 `keyup.enter` 又调用一次 `search()`。应该统一提交入口，例如只使用表单的 `@submit.prevent="search"`，或者调整结构让输入框 Enter 与表单提交不会形成两条重复路径。
+> 【答案】
+>
+> Enter 可能触发表单提交，而输入框的 `keyup.enter` 又调用一次 `search()`。应该统一提交入口，例如只使用表单的 `@submit.prevent="search"`，或者调整结构让输入框 Enter 与表单提交不会形成两条重复路径。
 
 ## 动态样式：根据业务状态改变外观
 
@@ -1280,6 +1427,13 @@ button { margin-right: 8px; }
 </style>
 ```
 
+**运行验证与预期结果：**
+
+1. 初次显示时，账户为“启用”，余额 3200 元，余额颜色是普通灰色。
+2. 点击“切换启用状态”，卡片背景变灰、文字变为“停用”，但余额数值不变。
+3. 点击“余额增加 2000 元”，余额变为 5200 元，`balanceStyle` 重新计算并将数字强调显示。
+4. 再切换账户状态，只有与 `active` 相关的类名变化；它不会自动改变 `balance`。
+
 ### 为什么这比手动设置 `element.style` 更适合业务组件
 
 在这个程序中，`active` 和 `balance` 是唯一需要维护的业务状态。点击按钮后，Vue 会根据绑定关系更新 class 和 style。开发者不需要手动查找 DOM，再调用 `classList.add()` 或修改元素的 `style.color`。
@@ -1292,7 +1446,9 @@ button { margin-right: 8px; }
 >
 > CSS 定义了 `.account-disabled`，模板写成 `:class="{ accountDisabled: !active }"`。为什么停用时没有应用到目标样式？
 >
-> 【答案】对象键 `accountDisabled` 对应的类名是 `accountDisabled`，而不是 `account-disabled`。可以改成 `:class="{ 'account-disabled': !active }"`，使它与 CSS 选择器名称一致。
+> 【答案】
+>
+> 对象键 `accountDisabled` 对应的类名是 `accountDisabled`，而不是 `account-disabled`。可以改成 `:class="{ 'account-disabled': !active }"`，使它与 CSS 选择器名称一致。
 
 ## 自定义指令：抽出重复的 DOM 操作
 
@@ -1355,6 +1511,27 @@ const vFocus = {
 
 如果只是“输入框初次出现时聚焦”，用 `mounted()` 就足够；如果还要求“把一个响应式开关从 false 改为 true 时重新聚焦”，就可以配合 `updated()` 判断变化。
 
+### `ObjectDirective`：为自定义指令声明类型
+
+在 TypeScript 项目中，可以使用 Vue 导出的 `ObjectDirective` 类型明确指令允许绑定什么元素、接收什么值。例如：
+
+```ts
+import type { ObjectDirective } from 'vue';
+
+const vFocus: ObjectDirective<HTMLInputElement, boolean> = {
+    mounted(el, binding) {
+        // el 必须是 input；binding.value 是布尔开关。
+        if (binding.value) {
+            el.focus();
+        }
+    }
+};
+```
+
+`ObjectDirective<元素类型, 绑定值类型>` 的第一个类型参数是指令作用的 DOM 元素类型，第二个类型参数是 `v-focus="..."` 传入的值类型。这里分别是 `HTMLInputElement` 和 `boolean`。
+
+在 `mounted()`、`updated()` 等钩子中，`el` 是当前元素，`binding.value` 是这次的绑定值，`binding.oldValue` 是上一次的绑定值。完整程序会在开关从 `false` 变为 `true` 时重新聚焦，并在元素移除时记录 `unmounted()` 的执行。
+
 ### 完整程序：局部 `v-focus` 指令
 
 文件：`src/App.vue`
@@ -1384,6 +1561,11 @@ const vFocus: ObjectDirective<HTMLInputElement, boolean> = {
         if (binding.value && !binding.oldValue) {
             el.focus();
         }
+    },
+
+    unmounted() {
+        // 本例没有定时器等资源需要清理，只记录卸载时机。
+        console.log('v-focus 对应的输入框已卸载');
     }
 };
 
@@ -1418,12 +1600,12 @@ function toggleInput(): void {
 </template>
 ```
 
-### 如何验证两个钩子
+**运行验证与预期结果：**
 
 1. 页面初次打开时，`visible=true`、`shouldFocus=true`，输入框挂载，指令的 `mounted()` 调用 `.focus()`。
 2. 取消勾选“允许自动聚焦”，把 `shouldFocus` 设为 `false`。
 3. 再勾选，开关从 `false` 变为 `true`，指令在更新阶段重新聚焦输入框。
-4. 点击“移除输入框”，`v-if` 让元素卸载。
+4. 点击“移除输入框”，`v-if` 让元素卸载，Console 记录 `unmounted()` 的日志。
 5. 再点击“重新显示输入框”，Vue 创建新 DOM 元素，再次执行指令的 `mounted()`。如果开关为真，就自动聚焦。
 
 `focus()` 是浏览器 `HTMLInputElement` 的原生方法，不是 Vue 才有的方法；Vue 的作用是把这个原生行为安排到合适的元素生命周期里。
@@ -1489,6 +1671,8 @@ const shown = ref(true);
 
 这里多了一个新的 Vue 应用 API：`app.directive(name, definition)`。第一个参数 `'focus'` 是指令注册名称，第二个参数是指令定义对象；模板用 `v-focus` 使用它。和局部指令一样，真正的输入框每次被 `v-if` 创建时，都会执行指令的挂载钩子。
 
+**运行验证：** 重新启动使用这个 `main.ts` 的项目，输入框首次显示时自动获得焦点；点击“切换输入框”使其消失，再点击让它重新出现，新的输入框会再次自动聚焦。与局部指令不同，其他组件也可直接使用这个已注册的 `v-focus`，不必每个组件重复声明 `const vFocus`。
+
 ### 哪些场景不应该用自定义指令
 
 有些企业项目会写 `v-permission` 控制按钮是否显示。阅读这种代码时要知道：**仅在浏览器里隐藏或禁用按钮不能建立真正的授权边界**。用户可以绕过前端界面直接调用 HTTP 接口，所以真实权限校验必须由后端执行。
@@ -1499,7 +1683,9 @@ const shown = ref(true);
 >
 > 一个项目的模板里直接写 `<input v-focus />`，但当前组件没有声明 `vFocus`。应该去哪里继续查找？
 >
-> 【答案】先查 `main.ts` 是否使用 `app.directive('focus', ...)` 全局注册，再查是否有其他插件统一注册指令；如果都没有，该模板可能缺少指令定义。Vue 本身不提供一个默认的 `v-focus` 指令。
+> 【答案】
+>
+> 先查 `main.ts` 是否使用 `app.directive('focus', ...)` 全局注册，再查是否有其他插件统一注册指令；如果都没有，该模板可能缺少指令定义。Vue 本身不提供一个默认的 `v-focus` 指令。
 
 ## 当日复盘与项目阅读方法
 
@@ -1562,19 +1748,25 @@ const shown = ref(true);
 >
 > 某业务页用 `<component :is="view">` 在账户查询和转账草稿间切换，用户反映：切回账户查询时查询条件清空；加上 `<KeepAlive>` 后条件保留，但切到转账草稿时查询页的定时器仍继续运行。应分别处理哪两个问题？
 >
-> 【答案】先用 `<KeepAlive>` 保留账户查询组件实例及其内部状态；再在账户查询组件的 `onDeactivated()` 中停止定时器、`onActivated()` 中恢复定时器，真正卸载时用 `onUnmounted()` 兜底清理。缓存状态和释放外部资源是两件不同的事。
+> 【答案】
+>
+> 先用 `<KeepAlive>` 保留账户查询组件实例及其内部状态；再在账户查询组件的 `onDeactivated()` 中停止定时器、`onActivated()` 中恢复定时器，真正卸载时用 `onUnmounted()` 兜底清理。缓存状态和释放外部资源是两件不同的事。
 
 > [!EXERCISE] 区分模板引用与响应式数据
 >
 > `const inputRef = ref<HTMLInputElement | null>(null)` 和 `const keyword = ref('')` 都调用了 `ref()`，它们为什么不是同一类业务变量？
 >
-> 【答案】`keyword` 保存字符串业务状态；`inputRef` 用于接收模板中的原生 DOM 元素，元素挂载前还不存在，因此初始化为 `null`。前者主要参与模板数据绑定，后者主要用于调用 `.focus()` 等 DOM 方法。
+> 【答案】
+>
+> `keyword` 保存字符串业务状态；`inputRef` 用于接收模板中的原生 DOM 元素，元素挂载前还不存在，因此初始化为 `null`。前者主要参与模板数据绑定，后者主要用于调用 `.focus()` 等 DOM 方法。
 
 > [!EXERCISE] 为什么样式不能代替权限
 >
 > 账户状态为停用时，页面给按钮加了灰色 class。是否可以据此保证停用账户不能提交交易？
 >
-> 【答案】不能。class 只改变外观，并不构成业务授权。前端应根据状态禁用相应控件，并在操作函数里检查；后端仍必须独立验证账户状态、用户权限及交易规则。
+> 【答案】
+>
+> 不能。class 只改变外观，并不构成业务授权。前端应根据状态禁用相应控件，并在操作函数里检查；后端仍必须独立验证账户状态、用户权限及交易规则。
 
 ### 官方文档索引
 
@@ -1584,5 +1776,6 @@ const shown = ref(true);
 - [Vue：模板引用](https://vuejs.org/guide/essentials/template-refs.html)
 - [Vue：响应式 DOM 更新与 nextTick](https://vuejs.org/guide/essentials/reactivity-fundamentals.html#dom-update-timing)
 - [Vue：事件处理与修饰符](https://vuejs.org/guide/essentials/event-handling.html)
+- [Vue：表单输入绑定与修饰符](https://vuejs.org/guide/essentials/forms.html#modifiers)
 - [Vue：动态 class 和 style](https://vuejs.org/guide/essentials/class-and-style.html)
 - [Vue：自定义指令](https://vuejs.org/guide/reusability/custom-directives.html)
